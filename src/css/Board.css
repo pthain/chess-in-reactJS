@@ -1,0 +1,32 @@
+.board{
+  border: black 5px solid;
+  display: flex;
+  flex-flow: row;
+  justify-content: space-around;
+}
+
+.board-row{
+  background: #070;
+  display: flex;
+  flex-flow: column;
+  justify-content: space-around;
+  padding: 0;
+  margin: 0;
+}
+
+.light {
+  background: #eee;
+}
+.dark {
+  background: #666;
+}
+
+.board-square{
+  border: black 1px solid;
+}
+
+.board-square::before {
+  content: '';
+  float:left;
+  padding-top: 100%;
+}

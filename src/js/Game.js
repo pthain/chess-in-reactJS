@@ -1,9 +1,6 @@
 import React from 'react'
 import Board from './Board.js'
 
-/*import '../css/Game.css';*/
-
-
 class Game extends React.Component{
   constructor(props) {
     super(props)
@@ -12,7 +9,7 @@ class Game extends React.Component{
       What do I want?
       To make an 8 by 8 grid, and display an item (pref coordinates) in each.
       Flow:
-        Game -> Board : props=desiredBoardState -> Each square
+        Game -> Board : props=boardState -> Each square
     */
 
     this.state = {
@@ -20,6 +17,8 @@ class Game extends React.Component{
       whiteToMove: true
     }
   }
+
+  fun
 
   getTurnID() {
     return (this.state.whiteToMove ? 'White' : 'Black')
