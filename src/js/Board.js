@@ -11,14 +11,19 @@ import '../css/Board.css';
   NOTE: https://stackoverflow.com/questions/22876978/loop-inside-react-jsx for sending a list into jsx
 */
 class Board extends React.Component {
-  getClassName(i, j) {
-    //00, 02, 04, 06
-    //11, 13,
-    //20, 22, 24, 26
-    //..
+  renderContent(i, j) {
+    if(j === 0 || j === 1 || j === 6 || j === 7) {
+      return (
+          <img className="piece-placeholder" src="./images/green-board.png" alt="Broken!"/>
+      )
+    }
+    else {
+      return ""
+    }
+  }
 
-    //01
-    if ((i+j)%2 == 0) {
+  getClassName(i, j) {
+    if ((i+j)%2 === 0) {
       return("board-square light")
     }
     else {
@@ -43,7 +48,6 @@ class Board extends React.Component {
   renderRow(i) {
     return(
       <div className="board-row" >
-        row #{i}
         {this.renderSquare(i, 0)}
         {this.renderSquare(i, 1)}
         {this.renderSquare(i, 2)}
@@ -57,7 +61,12 @@ class Board extends React.Component {
   }
   renderSquare(i, j) {
     return (
-      <div className={this.getClassName(i, j)}>I am Square ({i}, {j})</div>
+      <div className={this.getClassName(i, j)}>
+        <div className="square-content">
+          {/*May be empty OR contain a piece*/}
+          {this.renderContent(i, j)}
+        </div>
+      </div>
     )
   }
 

@@ -2,16 +2,32 @@
   border: black 5px solid;
   display: flex;
   flex-flow: row;
-  justify-content: space-around;
+  flex-grow: 1;
+  min-width: 400px;
+  max-width: 700px;
 }
 
 .board-row{
   background: #070;
   display: flex;
   flex-flow: column;
-  justify-content: space-around;
   padding: 0;
   margin: 0;
+  flex-grow: 1;
+}
+
+.board-square{
+  display: flex;
+  border: black 1px solid;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.board-square::before {
+  content: '';
+  float:left;
+  padding-top: 100%;
 }
 
 .light {
@@ -21,12 +37,12 @@
   background: #666;
 }
 
-.board-square{
-  border: black 1px solid;
+.square-content {
+  /*Target*/
+  display: inline-block;
 }
 
-.board-square::before {
-  content: '';
-  float:left;
-  padding-top: 100%;
+.piece-placeholder {
+  width: 50px;
+  height: 50px;
 }
