@@ -49,14 +49,14 @@ class Board extends React.Component {
   }
   renderSquare(i, j) {
     return (
-      <div className={this.getClassName(i, j)}>
+      <div onClick={()=>this.props.onClick(i, j)} className={this.getLightOrDark(i, j)}>
         <div className="square-content">
           {this.renderSquareContent(i, j, this.props.board[i][j])}
         </div>
       </div>
     )
   }
-  getClassName(i, j) {
+  getLightOrDark(i, j) {
     if ((i+j)%2 === 0) {
       return("board-square light")
     }
@@ -70,11 +70,9 @@ class Board extends React.Component {
       return "?"
     }
     var piece = sqValue.charAt(0)
+    var color = "no color"
     if (sqValue.length > 1) {
-      var color = sqValue.charAt(1)
-    }
-    else {
-      var color = "no color";
+      color = sqValue.charAt(1)
     }
 
     return (
@@ -139,7 +137,7 @@ class Board extends React.Component {
   /* Update the board if the state changes */
   render() {
     return (
-        <div onClick={this.props.onClick} className = "board-container">
+        <div className = "board-container">
           {this.renderBoard()}
         </div>
 

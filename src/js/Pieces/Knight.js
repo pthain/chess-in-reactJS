@@ -4,7 +4,6 @@ import knight_w from '../../images/pieces/knight_w.png'
 import knight_b from '../../images/pieces/knight_b.png'
 
 function Knight(props) {
-  console.log(props.isWhite)
   if (props.isWhite) {
     return (
       <img src={knight_w} alt='Rw'/>

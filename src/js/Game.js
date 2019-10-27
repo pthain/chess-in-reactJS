@@ -17,18 +17,21 @@ class Game extends React.Component{
 /******
   When the user clicks on the board, decide what to do
 ******/
-handleClick() {
-  var tmpBoard = this.state.board.slice()
-  tmpBoard[1][3] = '*'
-  tmpBoard[2][3] = 'Pb'
-  this.setState({
-    board: tmpBoard
-  })
-}
+  handleClick(i, j) {
+    var tmpBoard = this.state.board.slice()
+    console.log(i, j)
+    /*
+    tmpBoard[1][3] = '*'
+    tmpBoard[2][3] = 'Pb'
+    */
+    this.setState({
+      board: tmpBoard
+    })
+  }
 
-/*********
-  Creates an 8x8 matrix to represent the board
-**********/
+  /*********
+    Creates an 8x8 matrix to represent the board
+  **********/
   initBoard() {
     var boardState = []
     var boardSize = 8
@@ -107,7 +110,7 @@ handleClick() {
     return (
       <div>
         <div>Whose turn is it: {this.getTurnID()} </div>
-        <Board onClick={() => this.handleClick()} board={this.state.board}/>
+        <Board onClick={(i, j) => this.handleClick(i, j)} board={this.state.board}/>
       </div>
     );
   }

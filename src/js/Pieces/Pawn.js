@@ -4,7 +4,6 @@ import pawn_w from '../../images/pieces/pawn_w.png'
 import pawn_b from '../../images/pieces/pawn_b.png'
 
 function Pawn(props) {
-  console.log(props.isWhite)
   if (props.isWhite) {
     return (
       <img src={pawn_w} alt='Pw'/>

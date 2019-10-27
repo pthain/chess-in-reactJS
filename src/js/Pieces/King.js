@@ -4,7 +4,6 @@ import king_w from '../../images/pieces/king_w.png'
 import king_b from '../../images/pieces/king_b.png'
 
 function King(props) {
-  console.log(props.isWhite)
   if (props.isWhite) {
     return (
       <img src={king_w} alt='Rw'/>
