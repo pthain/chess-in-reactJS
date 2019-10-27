@@ -1,8 +1,10 @@
 import React from 'react'
 import '../css/Board.css';
-import pawn_w from '../images/pieces/pawn_w.png';
 
-import Piece from './Piece.js'
+/* Import Pieces */
+//import Piece from './Pieces/Piece.js';
+import Pawn from './Pieces/Pawn.js';
+import Rook from './Pieces/Rook.js';
 
 /*
   This class, when rendered, will return a React Component.
@@ -13,17 +15,41 @@ import Piece from './Piece.js'
 */
 class Board extends React.Component {
 
-  constructor(props) {
-    super(props)
-  }
-
   /* Use State to determine if there is a piece on this square */
   renderSquareContent(i, j, sqValue) {
     console.log(sqValue)
-    return(
-      <Piece sqValue={sqValue}/>
+    var piece = sqValue.charAt(0)
+    if (sqValue.charAt(0) === '*') {
+      return ""
+    }
+    var color = sqValue.charAt(1)
+
+    return (
+      <div className='game-piece'>
+        {this.pieceDispatcher(piece, color)}
+      </div>
     )
   }
+
+  pieceDispatcher(piece, color) {
+    if (piece === 'P') {
+      if (color === 'w') {
+        return(<Pawn isWhite = {true}/>)
+      }
+      else {
+        return(<Pawn isWhite = {false}/>)
+      }
+    }
+    if (piece === 'R') {
+      if (color === 'w') {
+        return(<Rook isWhite = {true}/>)
+      }
+      else {
+        return(<Rook isWhite = {false}/>)
+      }
+    }
+  }
+
   /*** Assign square as light or dark ***/
   getClassName(i, j) {
     if ((i+j)%2 === 0) {
