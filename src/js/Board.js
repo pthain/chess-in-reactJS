@@ -1,7 +1,8 @@
 import React from 'react'
 import '../css/Board.css';
+import pawn_w from '../images/pieces/pawn_w.png';
 
-//import Game from './Game.js'
+import Piece from './Piece.js'
 
 /*
   This class, when rendered, will return a React Component.
@@ -11,17 +12,19 @@ import '../css/Board.css';
   NOTE: https://stackoverflow.com/questions/22876978/loop-inside-react-jsx for sending a list into jsx
 */
 class Board extends React.Component {
-  renderContent(i, j) {
-    if(j === 0 || j === 1 || j === 6 || j === 7) {
-      return (
-          <img className="piece-placeholder" src="./images/green-board.png" alt="Broken!"/>
-      )
-    }
-    else {
-      return ""
-    }
+
+  constructor(props) {
+    super(props)
   }
 
+  /* Use State to determine if there is a piece on this square */
+  renderSquareContent(i, j, sqValue) {
+    console.log(sqValue)
+    return(
+      <Piece sqValue={sqValue}/>
+    )
+  }
+  /*** Assign square as light or dark ***/
   getClassName(i, j) {
     if ((i+j)%2 === 0) {
       return("board-square light")
@@ -63,8 +66,7 @@ class Board extends React.Component {
     return (
       <div className={this.getClassName(i, j)}>
         <div className="square-content">
-          {/*May be empty OR contain a piece*/}
-          {this.renderContent(i, j)}
+          {this.renderSquareContent(i, j, this.props.board[i][j])}
         </div>
       </div>
     )
@@ -72,9 +74,10 @@ class Board extends React.Component {
 
   render() {
     return (
-        <div>
+        <div className = "board-container">
           {this.renderBoard()}
         </div>
+
     )
   }
 }

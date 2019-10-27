@@ -1,48 +1,62 @@
+.board-container{
+  height: 100%;
+  border: cyan 10px solid;
+  display: flex;            /*flexbox container*/
+  flex-flow: row;           /*Items in this container are aligned in a row*/
+  justify-content: center;  /*Any items in this container will be centered
+                            Horizontally. */
+  align-items: start;       /*Any items in this container will be anchored to
+                            the start of this container Vertically. */
+}
+
 .board{
   border: black 5px solid;
-  display: flex;
-  flex-flow: row;
-  flex-grow: 1;
-  min-width: 400px;
-  max-width: 700px;
+  display: flex;        /*flexbox container*/
+  flex-flow: column;    /*Items in this container are aligned in a column*/
+  flex-grow: 1;         /*Fills vertical whitespace in the board-container w/ board*/
+  min-width: 400px;     /*boundary: don't let board get too small*/
+  max-width: 650px;     /*boundary: don't let board get too large*/
 }
 
 .board-row{
-  background: #070;
-  display: flex;
-  flex-flow: column;
-  padding: 0;
+  background: #070; /* Green */
+  display: flex;    /*flexbox container*/
+  flex-flow: row;   /*Items in this container are aligned in a row*/
+                    /* i.e. squares */
+  flex-grow: 0;     /* squares can grow to fill empty space in row*/
+  padding: 0;      /* Padding and margin keep rows tight together*/
   margin: 0;
-  flex-grow: 1;
 }
 
 .board-square{
-  display: flex;
-  border: black 1px solid;
-  justify-content: center;
+  display: flex;    /* flexbox container*/
+  flex-flow: row;   /* items are aligned in a row, i.e. pieces */
+  flex-grow: 1;     /* pieces should adapt to square space*/
+  border: #333 1px solid;
+  justify-content: center;  /*Items in this container will be centered*/
   align-items: center;
-
 }
 
+/* If you ever want to make squares adjust vertically, this hacky soln must change.*/
 .board-square::before {
   content: '';
-  float:left;
-  padding-top: 100%;
+  padding-top: 100%; /*Hack-y way to make each square maintain height*/
 }
+
+.square-content {
+  /*Target*/
+  min-width: 0;
+
+}
+
+.game-piece {
+  width: auto;
+}
+
 
 .light {
   background: #eee;
 }
 .dark {
   background: #666;
-}
-
-.square-content {
-  /*Target*/
-  display: inline-block;
-}
-
-.piece-placeholder {
-  width: 50px;
-  height: 50px;
 }
