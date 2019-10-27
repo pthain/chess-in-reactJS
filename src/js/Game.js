@@ -6,7 +6,11 @@ class Game extends React.Component{
     super(props)
     this.state = {
       board: this.setBoardNewGame(this.initBoard()),
-      whiteToMove: true
+      whiteToMove: true,
+      ssPiece: null,
+      ssIsWhite: null,
+      ssRow: -1,
+      ssCol: -1,
     }
   }
 
@@ -20,26 +24,126 @@ class Game extends React.Component{
   }
 /******
   When the user clicks on the board, decide what to do
+  TODO: Get a Piece, decide where it can move to, including colision w/ others
 ******/
-  handleClick(i, j) {
-    var tmpBoard = this.state.board.slice()
-    console.log(i, j)
-    console.log(this.getSquare(i, j))
-
-    /* Move piece forward */
-    var piece = this.getSquare(i, j)
-    if (piece === "*") {
-      return
-    }
-    tmpBoard[i][j] = "*"
-    tmpBoard[i + 1][j] = piece
     /*
-    tmpBoard[1][3] = '*'
-    tmpBoard[2][3] = 'Pb'
+      What should happen when a square is clicked?
+        -Check: if a piece is selected
+          - Check: Is this new (i, j) a different piece?
+            - break
+          - Check: Is this new (i, j) in the selected piece's possible moves?
+            - then place this piece on that sq.
+        -Check: if color matches whose turn it is
+        -Square is highlighted (un-highlight old sq.)
+        -set state: this piece @ i,j is selected
+        -Determine possible moves
+        -Display grey dots
     */
+
+  handleClick(i, j) {
+    //Get piece @ i, j
+    var sqValue = this.getSquare(i, j)
+    var whiteToMove = this.state.whiteToMove
+
+    //If a piece and same turn, select
+    if (sqValue !== '*' && (whiteToMove === this.isWhite(sqValue))) {
+      this.selectSquare(i, j, sqValue)
+    }
+
+    //Move the previously selected piece to (i, j) if possible.
+    else if (this.state.ssPiece !== null) {
+      this.moveSelectedPiece(i, j)
+    }
+  }
+      /*var tmpBoard = this.state.board.slice()
+      this.setState({
+        board: tmpBoard,
+      })
+    }
+
+      var ssPiece = this.state.ssPiece
+      var ssIsWhite = this.state.ssIsWhite
+      var ssRow = this.state.ssRow
+      var ssCol = this.state.ssCol
+      */
+      //console.log(this.state)
+      /* Move the selected piece to (i, j), if possible */
+      /*
+      if (ss === 'Pw' && ((ssRow - 1 === i) && (ssCol === j))) {
+
+        tmpBoard[ssRow][ssCol] = '*'
+        tmpBoard[ssRow - 1][ssCol] = ss
+      }*/
+      /*
+      //Make a move
+      tmpBoard[i][j] = "*"
+      tmpBoard[i + 1][j] = piece
+      /*
+      tmpBoard[1][3] = '*'
+      tmpBoard[2][3] = 'Pb' */
+      //deselectSquare()
+
+  selectSquare(i, j, piece) {
     this.setState({
-      board: tmpBoard
+      ssPiece: piece,
+      ssIsWhite: this.isWhite(piece),
+      ssRow: i,
+      ssCol: j
     })
+  }
+
+/*
+  parsePiece(pieceStr) {
+    if(pieceStr !== null && pieceStr.length > 0){
+      return pieceStr.charAt(0)
+    }
+  }
+*/
+
+  isWhite(piece) {
+    if(piece !== null && piece.length > 1){
+      if(piece.charAt(1) === 'w') {
+        return true
+      }
+      else {
+        return false
+      }
+    }
+  }
+
+  deselectSquare() {
+    this.setState({
+      ssPiece: null,
+      ssIsWhite: null,
+      ssRow: -1,
+      ssCol: -1
+    })
+  }
+
+  /** Given a state and a destination, update state by moving piece if poss.**/
+  moveSelectedPiece(i, j) {
+    /* Move this.ssPiece to (i, j)*/
+    var tmpBoard = this.state.board.slice()
+    var ssPiece = this.state.ssPiece
+    var ssRow = this.state.ssRow
+    var ssCol = this.state.ssCol
+
+    tmpBoard[ssRow][ssCol] = "*"  //Empty old space
+    tmpBoard[i][j] = ssPiece  //move piece to new space
+    this.setState({
+      board: tmpBoard,
+      whiteToMove: this.toggleTurnID()
+    })
+    this.deselectSquare()
+  }
+
+  toggleTurnID() {
+    if(this.state.whiteToMove) {
+      return false
+    }
+    else {
+      return true
+    }
   }
 
   /*********
@@ -57,7 +161,7 @@ class Game extends React.Component{
     return boardState
   }
 
-  /*********
+  /********
     When a user starts a new game, invoke this function to setup the board.
     Board Legend:
       P = Pawn, R = Rook, N = Knight, B = Bishop
@@ -120,6 +224,7 @@ class Game extends React.Component{
   }
   render() {
 
+    console.log(this.state)
     return (
       <div>
         <div>Whose turn is it: {this.getTurnID()} </div>
