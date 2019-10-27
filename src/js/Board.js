@@ -5,6 +5,10 @@ import '../css/Board.css';
 //import Piece from './Pieces/Piece.js';
 import Pawn from './Pieces/Pawn.js';
 import Rook from './Pieces/Rook.js';
+import Knight from './Pieces/Knight.js';
+import Bishop from './Pieces/Bishop.js';
+import Queen from './Pieces/Queen.js';
+import King from './Pieces/King.js';
 
 /*
   This class, when rendered, will return a React Component.
@@ -46,6 +50,38 @@ class Board extends React.Component {
       }
       else {
         return(<Rook isWhite = {false}/>)
+      }
+    }
+    if (piece === 'N') {
+      if (color === 'w') {
+        return(<Knight isWhite = {true}/>)
+      }
+      else {
+        return(<Knight isWhite = {false}/>)
+      }
+    }
+    if (piece === 'B') {
+      if (color === 'w') {
+        return(<Bishop isWhite = {true}/>)
+      }
+      else {
+        return(<Bishop isWhite = {false}/>)
+      }
+    }
+    if (piece === 'Q') {
+      if (color === 'w') {
+        return(<Queen isWhite = {true}/>)
+      }
+      else {
+        return(<Queen isWhite = {false}/>)
+      }
+    }
+    if (piece === 'K') {
+      if (color === 'w') {
+        return(<King isWhite = {true}/>)
+      }
+      else {
+        return(<King isWhite = {false}/>)
       }
     }
   }
