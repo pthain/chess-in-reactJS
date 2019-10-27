@@ -4,14 +4,6 @@ import Board from './Board.js'
 class Game extends React.Component{
   constructor(props) {
     super(props)
-
-    /*
-      What do I want?
-      To make an 8 by 8 grid, and display an item (pref coordinates) in each.
-      Flow:
-        Game -> Board : props=boardState -> Each square
-    */
-
     this.state = {
       board: this.setBoardNewGame(this.initBoard()),
       whiteToMove: true
@@ -22,12 +14,21 @@ class Game extends React.Component{
     return (this.state.whiteToMove ? 'White' : 'Black')
   }
 
-  /***
-    Board Legend:
-      P = Pawn, R = Rook, N = Knight, B = Bishop
-      Q = Queen, K = King, * = Empty
-      _b = black, _w = white
-  ***/
+/******
+  When the user clicks on the board, decide what to do
+******/
+handleClick() {
+  var tmpBoard = this.state.board.slice()
+  tmpBoard[1][3] = '*'
+  tmpBoard[2][3] = 'Pb'
+  this.setState({
+    board: tmpBoard
+  })
+}
+
+/*********
+  Creates an 8x8 matrix to represent the board
+**********/
   initBoard() {
     var boardState = []
     var boardSize = 8
@@ -42,6 +43,10 @@ class Game extends React.Component{
 
   /*********
     When a user starts a new game, invoke this function to setup the board.
+    Board Legend:
+      P = Pawn, R = Rook, N = Knight, B = Bishop
+      Q = Queen, K = King, * = Empty
+      _b = black, _w = white
   **********/
   setBoardNewGame(boardState) {
     var boardSize = boardState.length
@@ -102,7 +107,7 @@ class Game extends React.Component{
     return (
       <div>
         <div>Whose turn is it: {this.getTurnID()} </div>
-        <Board board={this.state.board}/>
+        <Board onClick={() => this.handleClick()} board={this.state.board}/>
       </div>
     );
   }

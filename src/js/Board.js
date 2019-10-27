@@ -15,18 +15,67 @@ import King from './Pieces/King.js';
   The Component will contain HTML content for the newly rendered Board.
   In otherwords, everytime there is a state change in the board,
   The render() function will be called again.
-  NOTE: https://stackoverflow.com/questions/22876978/loop-inside-react-jsx for sending a list into jsx
 */
 class Board extends React.Component {
 
-  /* Use State to determine if there is a piece on this square */
-  renderSquareContent(i, j, sqValue) {
-    console.log(sqValue)
-    var piece = sqValue.charAt(0)
-    if (sqValue.charAt(0) === '*') {
-      return ""
+  /*** Assign square as light or dark ***/
+  renderBoard() {
+    return(
+      <div className="board">
+        {this.renderRow(0)}
+        {this.renderRow(1)}
+        {this.renderRow(2)}
+        {this.renderRow(3)}
+        {this.renderRow(4)}
+        {this.renderRow(5)}
+        {this.renderRow(6)}
+        {this.renderRow(7)}
+      </div>
+    )
+  }
+  renderRow(i) {
+    return(
+      <div className="board-row" >
+        {this.renderSquare(i, 0)}
+        {this.renderSquare(i, 1)}
+        {this.renderSquare(i, 2)}
+        {this.renderSquare(i, 3)}
+        {this.renderSquare(i, 4)}
+        {this.renderSquare(i, 5)}
+        {this.renderSquare(i, 6)}
+        {this.renderSquare(i, 7)}
+      </div>
+    )
+  }
+  renderSquare(i, j) {
+    return (
+      <div className={this.getClassName(i, j)}>
+        <div className="square-content">
+          {this.renderSquareContent(i, j, this.props.board[i][j])}
+        </div>
+      </div>
+    )
+  }
+  getClassName(i, j) {
+    if ((i+j)%2 === 0) {
+      return("board-square light")
     }
-    var color = sqValue.charAt(1)
+    else {
+      return("board-square dark")
+    }
+  }
+  /* Use State to determine if a piece is on this square */
+  renderSquareContent(i, j, sqValue) {
+    if(sqValue === undefined) {
+      return "?"
+    }
+    var piece = sqValue.charAt(0)
+    if (sqValue.length > 1) {
+      var color = sqValue.charAt(1)
+    }
+    else {
+      var color = "no color";
+    }
 
     return (
       <div className='game-piece'>
@@ -34,8 +83,10 @@ class Board extends React.Component {
       </div>
     )
   }
-
   pieceDispatcher(piece, color) {
+    if (color === "no color") {
+      return ""
+    }
     if (piece === 'P') {
       if (color === 'w') {
         return(<Pawn isWhite = {true}/>)
@@ -85,58 +136,10 @@ class Board extends React.Component {
       }
     }
   }
-
-  /*** Assign square as light or dark ***/
-  getClassName(i, j) {
-    if ((i+j)%2 === 0) {
-      return("board-square light")
-    }
-    else {
-      return("board-square dark")
-    }
-  }
-
-  renderBoard() {
-    return(
-      <div className="board">
-        {this.renderRow(0)}
-        {this.renderRow(1)}
-        {this.renderRow(2)}
-        {this.renderRow(3)}
-        {this.renderRow(4)}
-        {this.renderRow(5)}
-        {this.renderRow(6)}
-        {this.renderRow(7)}
-      </div>
-    )
-  }
-  renderRow(i) {
-    return(
-      <div className="board-row" >
-        {this.renderSquare(i, 0)}
-        {this.renderSquare(i, 1)}
-        {this.renderSquare(i, 2)}
-        {this.renderSquare(i, 3)}
-        {this.renderSquare(i, 4)}
-        {this.renderSquare(i, 5)}
-        {this.renderSquare(i, 6)}
-        {this.renderSquare(i, 7)}
-      </div>
-    )
-  }
-  renderSquare(i, j) {
-    return (
-      <div className={this.getClassName(i, j)}>
-        <div className="square-content">
-          {this.renderSquareContent(i, j, this.props.board[i][j])}
-        </div>
-      </div>
-    )
-  }
-
+  /* Update the board if the state changes */
   render() {
     return (
-        <div className = "board-container">
+        <div onClick={this.props.onClick} className = "board-container">
           {this.renderBoard()}
         </div>
 
