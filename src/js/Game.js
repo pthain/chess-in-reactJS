@@ -14,12 +14,25 @@ class Game extends React.Component{
     return (this.state.whiteToMove ? 'White' : 'Black')
   }
 
+
+  getSquare(i, j) {
+    return this.state.board[i][j]
+  }
 /******
   When the user clicks on the board, decide what to do
 ******/
   handleClick(i, j) {
     var tmpBoard = this.state.board.slice()
     console.log(i, j)
+    console.log(this.getSquare(i, j))
+
+    /* Move piece forward */
+    var piece = this.getSquare(i, j)
+    if (piece === "*") {
+      return
+    }
+    tmpBoard[i][j] = "*"
+    tmpBoard[i + 1][j] = piece
     /*
     tmpBoard[1][3] = '*'
     tmpBoard[2][3] = 'Pb'
