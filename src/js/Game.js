@@ -8,11 +8,21 @@ class Game extends React.Component{
       board: this.setBoardNewGame(this.initBoard()),
       whiteToMove: true,
       ssPiece: null,
+      ssPieceType: null,
       ssIsWhite: null,
       ssRow: -1,
       ssCol: -1,
     }
   }
+  /********************************************
+  *********** Piece Movement Rules ************
+  *********************************************/
+  pawnMoves(){return [] }
+  rookMoves(){return []}
+  knightMoves(){return []}
+  bishopMoves(){return []}
+  queenMoves(){return []}
+  kingMoves(){return []}
 
   getTurnID() {
     return (this.state.whiteToMove ? 'White' : 'Black')
@@ -43,62 +53,34 @@ class Game extends React.Component{
   handleClick(i, j) {
     //Get piece @ i, j
     var sqValue = this.getSquare(i, j)
-    var whiteToMove = this.state.whiteToMove
 
-    //If a piece and same turn, select
-    if (sqValue !== '*' && (whiteToMove === this.isWhite(sqValue))) {
+    //If sqValue is a piece and its that color's move, select it
+    if (sqValue !== '*' && (this.state.whiteToMove === this.isWhite(sqValue))) {
       this.selectSquare(i, j, sqValue)
     }
 
     //Move the previously selected piece to (i, j) if possible.
     else if (this.state.ssPiece !== null) {
-      this.moveSelectedPiece(i, j)
+      this.moveDispatcher(i, j)
     }
+    //Otherwise, do nothing
   }
-      /*var tmpBoard = this.state.board.slice()
-      this.setState({
-        board: tmpBoard,
-      })
-    }
-
-      var ssPiece = this.state.ssPiece
-      var ssIsWhite = this.state.ssIsWhite
-      var ssRow = this.state.ssRow
-      var ssCol = this.state.ssCol
-      */
-      //console.log(this.state)
-      /* Move the selected piece to (i, j), if possible */
-      /*
-      if (ss === 'Pw' && ((ssRow - 1 === i) && (ssCol === j))) {
-
-        tmpBoard[ssRow][ssCol] = '*'
-        tmpBoard[ssRow - 1][ssCol] = ss
-      }*/
-      /*
-      //Make a move
-      tmpBoard[i][j] = "*"
-      tmpBoard[i + 1][j] = piece
-      /*
-      tmpBoard[1][3] = '*'
-      tmpBoard[2][3] = 'Pb' */
-      //deselectSquare()
 
   selectSquare(i, j, piece) {
     this.setState({
       ssPiece: piece,
+      ssPieceType: this.getPieceType(piece),
       ssIsWhite: this.isWhite(piece),
       ssRow: i,
       ssCol: j
     })
   }
 
-/*
-  parsePiece(pieceStr) {
-    if(pieceStr !== null && pieceStr.length > 0){
-      return pieceStr.charAt(0)
+  getPieceType(piece) {
+    if(piece !== null && piece.length > 0) {
+      return piece.charAt(0)
     }
   }
-*/
 
   isWhite(piece) {
     if(piece !== null && piece.length > 1){
@@ -114,10 +96,39 @@ class Game extends React.Component{
   deselectSquare() {
     this.setState({
       ssPiece: null,
+      ssPieceType: null,
       ssIsWhite: null,
       ssRow: -1,
       ssCol: -1
     })
+  }
+
+  moveDispatcher(i, j) {
+    //Depending on the type of piece, call a function
+    var ssPieceType = this.state.ssPieceType
+    var possibleMoves = []
+    if (ssPieceType === 'P') {possibleMoves = this.pawnMoves()}
+    else if (ssPieceType === 'R') {possibleMoves = this.rookMoves()}
+    else if (ssPieceType === 'N') {possibleMoves = this.knightMoves()}
+    else if (ssPieceType === 'B') {possibleMoves = this.bishopMoves()}
+    else if (ssPieceType === 'Q') {possibleMoves = this.queenMoves()}
+    else if (ssPieceType === 'K') {possibleMoves = this.kingMoves()}
+    //else no possible moves
+    var coordinate = [i, j]
+    possibleMoves.push([i, j])
+    console.log(possibleMoves)
+    /* For all possible moves, if the dest is a poss move, do it.*/
+    if (coordinate[0] === i && coordinate[1] === j) {
+      this.moveSelectedPiece(i, j)
+    }
+    /*
+    for () {
+      console.log(move, i)
+      if (move[0] === i && move[1] === j) {
+        this.moveSelectedPiece(i, j)
+      }
+    }
+    */
   }
 
   /** Given a state and a destination, update state by moving piece if poss.**/
