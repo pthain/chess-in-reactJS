@@ -71,20 +71,15 @@ class Game extends React.Component{
         moveMatrix[dstRow][dstCol] = CAPTURE
       }
     }
-    return moveMatrix
-  }
-  rookMoves(){
-    var srcRow = this.state.ssRow
-    var srcCol = this.state.ssCol
-    var moveMatrix = this.initBoard()
-    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, 7)
+    //Look for checks
+
     return moveMatrix
   }
   knightMoves(){
-    var isWhite = this.state.ssIsWhite
     var srcRow = this.state.ssRow
     var srcCol = this.state.ssCol
     var moveMatrix = this.initBoard()
+
 
     let dstRow = -1
     let dstCol = -1
@@ -92,7 +87,7 @@ class Game extends React.Component{
 
     let moveModifiers = []
 
-    //Enumerate moves
+    //Enumerate move modifiers from srcRow, srcCol
     for(let r = -2; r <= 2; r++) {
       for(let c = -2; c <= 2; c++) {
         if (!(Math.abs(r) === Math.abs(c) || r === 0 || c === 0)) {
@@ -117,30 +112,40 @@ class Game extends React.Component{
     }
     return moveMatrix
   }
+  rookMoves(){
+    var srcRow = this.state.ssRow
+    var srcCol = this.state.ssCol
+    var moveMatrix = this.initBoard()
+    var maxDist = 7
+    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
+    return moveMatrix
+  }
   bishopMoves(){
     var srcRow = this.state.ssRow
     var srcCol = this.state.ssCol
     var moveMatrix = this.initBoard()
-    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, 7)
+    var maxDist = 7
+    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
   queenMoves(){
     var srcRow = this.state.ssRow
     var srcCol = this.state.ssCol
     var moveMatrix = this.initBoard()
-    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, 7)
-    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, 7)
+    var maxDist = 7
+    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
   kingMoves(){
     var srcRow = this.state.ssRow
     var srcCol = this.state.ssCol
     var moveMatrix = this.initBoard()
-    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, 1)
-    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, 1)
+    var maxDist = 1
+    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
-
   columnsAndRows(srcRow, srcCol, moveMatrix, maxDist) {
     let dstRow = -1
     let dstCol = -1
@@ -278,80 +283,38 @@ class Game extends React.Component{
     return moveMatrix
 
   }
+
+  /********************************************
+  ******* Piece & Movement Information ********
+  *********************************************/
   isCapturable(dstRow, dstCol) {
     let whiteToMove = this.state.whiteToMove
-    console.log(dstRow, dstCol)
     if(this.sqIsEmpty(dstRow, dstCol) || !this.sqInBounds(dstRow, dstCol)) {
       return false
     }
-    let victimSquare = this.state.board[dstRow][dstCol]
+    let victimSquare = this.getValueAtSquare(dstRow, dstCol)
     return (whiteToMove ? !this.isWhite(victimSquare) : this.isWhite(victimSquare))
   }
   sqIsEmpty(i, j) {
     if (!this.sqInBounds(i, j)) {
       return null
     }
-    return (this.state.board[i][j] === '*')
+    return (this.getValueAtSquare(i,j) === '*')
   }
-  getTurnID() {
-    return (this.state.whiteToMove ? 'White' : 'Black')
-  }
-  getSquare(i, j) {
+  getValueAtSquare(i, j) {
+    if (!this.sqInBounds(i, j)) {
+      return null
+    }
     return this.state.board[i][j]
   }
   sqInBounds(i, j) {
     return !(i < 0 || j < 0 || i > 7 || j > 7)
   }
-  /******
-    When the user clicks on the board, decide what to do
-    TODO: Get a Piece, decide where it can move to, including colision w/ others
-  ******/
-  /*
-    What should happen when a square is clicked?
-      -Check: if a piece is selected
-        - Check: Is this new (i, j) a different piece?
-          - break
-        - Check: Is this new (i, j) in the selected piece's possible moves?
-          - then place this piece on that sq.
-      -Check: if color matches whose turn it is
-      -Square is highlighted (un-highlight old sq.)
-      -set state: this piece @ i,j is selected
-      -Determine possible moves
-      -Display grey dots
-  */
-
-  handleClick(i, j) {
-    //Get piece @ i, j
-    var sqValue = this.getSquare(i, j)
-
-    //If sqValue is a piece and its that color's move, select it
-    if (sqValue !== '*' && (this.state.whiteToMove === this.isWhite(sqValue))) {
-      this.selectSquare(i, j, sqValue)
-    }
-
-    //Move the previously selected piece to (i, j) if possible.
-    else if (this.state.ssPiece !== null) {
-      this.moveDispatcher(i, j)
-    }
-    //Otherwise, do nothing
-  }
-
-  selectSquare(i, j, piece) {
-    this.setState({
-      ssPiece: piece,
-      ssPieceType: this.getPieceType(piece),
-      ssIsWhite: this.isWhite(piece),
-      ssRow: i,
-      ssCol: j
-    })
-  }
-
   getPieceType(piece) {
     if(piece !== null && piece.length > 0) {
       return piece.charAt(0)
     }
   }
-
   isWhite(piece) {
     if(piece !== null && piece.length > 1){
       if(piece.charAt(1) === 'w') {
@@ -363,6 +326,47 @@ class Game extends React.Component{
     }
   }
 
+  /**
+    When the user clicks on the board, decide what to do
+
+    What should happen when a square is clicked?
+      +Check: if a piece is selected
+        - +Check: Is this new (i, j) a different piece?
+          + break
+        + Check: Is this new (i, j) in the selected piece's possible moves?
+          + then place this piece on that sq.
+      +Check: if color matches whose turn it is
+      +set state: this piece @ i,j is selected
+      +Determine possible moves
+      -Square is highlighted (un-highlight old sq.)
+      -Display grey dots
+  **/
+  handleClick(i, j) {
+    //Get piece @ i, j
+    var sqValue = this.getValueAtSquare(i, j)
+    if (sqValue === null) {
+      console.log("clicked sq is null (should not occur)")
+    }
+    //If sqValue is a piece and its that color's move, select it
+    else if (sqValue !== '*' && (this.state.whiteToMove === this.isWhite(sqValue))) {
+      this.selectSquare(i, j, sqValue)
+    }
+
+    //Move the previously selected piece to (i, j) if possible.
+    else if (this.state.ssPiece !== null) {
+      this.moveDispatcher(i, j)
+    }
+    //Otherwise, do nothing
+  }
+  selectSquare(i, j, piece) {
+    this.setState({
+      ssPiece: piece,
+      ssPieceType: this.getPieceType(piece),
+      ssIsWhite: this.isWhite(piece),
+      ssRow: i,
+      ssCol: j
+    })
+  }
   deselectSquare() {
     this.setState({
       ssPiece: null,
@@ -372,18 +376,16 @@ class Game extends React.Component{
       ssCol: -1
     })
   }
-
   moveDispatcher(i, j) {
     //Depending on the type of piece, call a function
     var ssPieceType = this.state.ssPieceType
     let moveMatrix = this.getMoves(ssPieceType)
     if (moveMatrix[i][j] === AVAILABLE || moveMatrix[i][j] === CAPTURE) {
-      //Todo: Does this move place this player's king in check?
       this.moveSelectedPiece(i, j)
     }
+    this.deselectSquare()
     /* For all possible moves, if the dest is a poss move, do it.*/
   }
-
   getMoves(pieceType) {
     let moveMatrix = []
     if (pieceType === 'P') {moveMatrix = this.pawnMoves()}
@@ -396,8 +398,9 @@ class Game extends React.Component{
     console.log(moveMatrix)
     return moveMatrix
   }
-
-  /** Given a state and a destination, update state by moving piece if poss.**/
+  /**
+    Given a state and a destination, update state by moving piece if poss.
+  **/
   moveSelectedPiece(i, j) {
     /* Move this.ssPiece to (i, j)*/
     var tmpBoard = this.state.board.slice()
@@ -411,9 +414,11 @@ class Game extends React.Component{
       board: tmpBoard,
       whiteToMove: this.toggleTurnID()
     })
-    this.deselectSquare()
   }
 
+  /****************************
+   *********Game state*********
+   ****************************/
   toggleTurnID() {
     if(this.state.whiteToMove) {
       return false
@@ -422,10 +427,13 @@ class Game extends React.Component{
       return true
     }
   }
+  getTurnID() {
+    return (this.state.whiteToMove ? 'White' : 'Black')
+  }
 
-  /*********
-    Creates an 8x8 matrix to represent the board
-  **********/
+  /**
+  reates an 8x8 matrix to represent the board
+  **/
   initBoard() {
     var boardState = []
     var boardSize = 8
@@ -438,13 +446,13 @@ class Game extends React.Component{
     return boardState
   }
 
-  /********
+  /**
     When a user starts a new game, invoke this function to setup the board.
     Board Legend:
       P = Pawn, R = Rook, N = Knight, B = Bishop
       Q = Queen, K = King, * = Empty
       _b = black, _w = white
-  **********/
+ **/
   setBoardNewGame(boardState) {
     var boardSize = boardState.length
     for (var i = 0; i < boardSize; i++) {
@@ -499,12 +507,19 @@ class Game extends React.Component{
     }
     return boardState
   }
-  render() {
 
-    console.log(this.state)
+  render() {
+    //console.log(this.state)
     return (
       <div>
-        <div>Whose turn is it: {this.getTurnID()} </div>
+        <div className="game-header">
+          <div id="turn-id"> Whose turn is it: {this.getTurnID()} </div>
+          <div>
+            <button id="prev-state" className="state-arrow-button">{"<-"}</button>
+            <button id="next-state" className="state-arrow-button">{"->"}</button>
+          </div>
+        </div>
+
         <Board onClick={(i, j) => this.handleClick(i, j)} board={this.state.board}/>
       </div>
     );
