@@ -1,6 +1,9 @@
 import React from 'react'
 import Board from './Board.js'
 
+const CAPTURE = 'x'
+const AVAILABLE = '+'
+
 class Game extends React.Component{
   constructor(props) {
     super(props)
@@ -17,38 +20,305 @@ class Game extends React.Component{
   /********************************************
   *********** Piece Movement Rules ************
   *********************************************/
-  pawnMoves(){return [] }
-  rookMoves(){return []}
-  knightMoves(){return []}
-  bishopMoves(){return []}
-  queenMoves(){return []}
-  kingMoves(){return []}
+  pawnMoves() {
+    //Backrow -> promotion
+    //Startrow -> move two
+    //Capture -> move row+1 && col-1 or col+1
+    //En passant:
+      //5th rank w: (row === 3) b: (row === 4)
+      //&& last move was enemy pawn move two on col j+1 or j-1
+    //Otherwise -> move one
+    var isWhite = this.state.ssIsWhite
+    var srcRow = this.state.ssRow
+    var srcCol = this.state.ssCol
+    var moveMatrix = this.initBoard()
 
+    let dir = 0
+    let startrow = -1
+    let dstRow = -1
+    let dstCol = -1
+
+    //White
+    if (isWhite) {
+      startrow = 6
+      dir = -1
+    }
+    else {
+      startrow = 1
+      dir = 1
+    }
+    //Mark space one ahead
+    dstRow = srcRow + dir
+    if (this.sqIsEmpty(dstRow, srcCol)) {
+      moveMatrix[dstRow][srcCol] = AVAILABLE
+    }
+    //Mark a move-two if possible
+    dstRow = srcRow + (2 * dir)
+    if (srcRow === startrow && this.sqIsEmpty(dstRow, srcCol)) {
+      moveMatrix[dstRow][srcCol] = AVAILABLE
+    }
+    //Mark a capture if possible
+    dstRow = srcRow + dir
+    dstCol = srcCol - 1 //Left
+    if (dstCol >= 0) {
+      if (!this.sqIsEmpty(dstRow, dstCol) && this.isCapturable(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = CAPTURE
+      }
+    }
+    dstCol = srcCol + 1
+    if (dstCol <= 7) {
+      if (!this.sqIsEmpty(dstRow, dstCol) && this.isCapturable(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = CAPTURE
+      }
+    }
+    return moveMatrix
+  }
+  rookMoves(){
+    var srcRow = this.state.ssRow
+    var srcCol = this.state.ssCol
+    var moveMatrix = this.initBoard()
+    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, 7)
+    return moveMatrix
+  }
+  knightMoves(){
+    var isWhite = this.state.ssIsWhite
+    var srcRow = this.state.ssRow
+    var srcCol = this.state.ssCol
+    var moveMatrix = this.initBoard()
+
+    let dstRow = -1
+    let dstCol = -1
+    let isCapturablePiece = null
+
+    let moveModifiers = []
+
+    //Enumerate moves
+    for(let r = -2; r <= 2; r++) {
+      for(let c = -2; c <= 2; c++) {
+        if (!(Math.abs(r) === Math.abs(c) || r === 0 || c === 0)) {
+          let moveMod = [r, c]
+          moveModifiers.push(moveMod)
+        }
+      }
+    }
+    for (let m = 0; m < moveModifiers.length; m++) {
+      dstRow = srcRow + moveModifiers[m][0]
+      dstCol = srcCol + moveModifiers[m][1]
+      if (dstRow < 0 || dstCol < 0 || dstRow > 7 || dstCol > 7) {
+        continue
+      }
+      else if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      isCapturablePiece = this.isCapturable(dstRow, dstCol)
+      if (isCapturablePiece) {
+        moveMatrix[dstRow][dstCol] = CAPTURE
+      }
+    }
+    return moveMatrix
+  }
+  bishopMoves(){
+    var srcRow = this.state.ssRow
+    var srcCol = this.state.ssCol
+    var moveMatrix = this.initBoard()
+    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, 7)
+    return moveMatrix
+  }
+  queenMoves(){
+    var srcRow = this.state.ssRow
+    var srcCol = this.state.ssCol
+    var moveMatrix = this.initBoard()
+    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, 7)
+    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, 7)
+    return moveMatrix
+  }
+  kingMoves(){
+    var srcRow = this.state.ssRow
+    var srcCol = this.state.ssCol
+    var moveMatrix = this.initBoard()
+    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, 1)
+    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, 1)
+    return moveMatrix
+  }
+
+  columnsAndRows(srcRow, srcCol, moveMatrix, maxDist) {
+    let dstRow = -1
+    let dstCol = -1
+    //North
+    dstCol = srcCol
+    for (let i = 1; (srcRow - i >= 0) && (i <= maxDist); i++) {
+      dstRow = (srcRow - i)
+      if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      //If not empty, then there is a piece.
+      else {
+        if (this.isCapturable(dstRow, dstCol)) {
+          moveMatrix[dstRow][dstCol] = CAPTURE
+        }
+        //Stop: rook can't move past a piece
+        break
+      }
+    }
+    //South
+    for (let i = 1; (srcRow + i <= 7) && (i <= maxDist); i++) {
+      dstRow = srcRow + i
+      if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      else {
+        if (this.isCapturable(dstRow, dstCol)) {
+          moveMatrix[dstRow][dstCol] = CAPTURE
+        }
+        //Stop: rook can't move past a piece
+        break
+      }
+    }
+    //West
+    dstRow = srcRow
+    for (let i = 1; (srcCol - i >= 0) && (i <= maxDist); i++) {
+      dstCol = srcCol - i
+      if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      //If not empty, then there is a piece.
+      else {
+        if (this.isCapturable(dstRow, dstCol)) {
+          moveMatrix[dstRow][dstCol] = CAPTURE
+        }
+        //Stop: rook can't move past a piece
+        break
+      }
+    }
+    //East
+    for (let i = 1; (srcCol + i <= 7) && (i <= maxDist); i++) {
+      dstCol = srcCol + i
+      if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      //If not empty, then there is a piece.
+      else {
+        if (this.isCapturable(dstRow, dstCol)) {
+          moveMatrix[dstRow][dstCol] = CAPTURE
+        }
+        //Stop: rook can't move past a piece
+        break
+      }
+    }
+    return moveMatrix
+  }
+  diagonals(srcRow, srcCol, moveMatrix, maxDist) {
+    let dstRow = -1
+    let dstCol = -1
+
+    //NE
+    for (let i = 1; (((srcCol + i) <= 7 || (srcRow - i) >= 0) && i <= maxDist); i++) {
+      dstRow = srcRow - i
+      dstCol = srcCol + i
+      if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      //If not empty, then there is a piece.
+      else {
+        if (this.isCapturable(dstRow, dstCol)) {
+          moveMatrix[dstRow][dstCol] = CAPTURE
+        }
+        //Stop: bishop can't move past a piece
+        break
+      }
+    }
+    //NW
+    for (let i = 1; (((srcCol - i) >= 0 || (srcRow - i) >= 0) && i <= maxDist); i++) {
+      dstRow = srcRow - i
+      dstCol = srcCol - i
+      if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      //If not empty, then there is a piece.
+      else {
+        if (this.isCapturable(dstRow, dstCol)) {
+          moveMatrix[dstRow][dstCol] = CAPTURE
+        }
+        //Stop: bishop can't move past a piece
+        break
+      }
+    }
+    //SW
+    for (let i = 1; (((srcCol - i) >= 0 || (srcRow + i) <= 7) && i <= maxDist); i++) {
+      dstRow = srcRow + i
+      dstCol = srcCol - i
+      if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      //If not empty, then there is a piece.
+      else {
+        if (this.isCapturable(dstRow, dstCol)) {
+          moveMatrix[dstRow][dstCol] = CAPTURE
+        }
+        //Stop: bishop can't move past a piece
+        break
+      }
+    }
+    //SE
+    for (let i = 1; (((srcCol + i) <= 7 || (srcRow + i) <= 7) && i <= maxDist); i++) {
+      dstRow = srcRow + i
+      dstCol = srcCol + i
+      if (this.sqIsEmpty(dstRow, dstCol)) {
+        moveMatrix[dstRow][dstCol] = AVAILABLE
+      }
+      //If not empty, then there is a piece.
+      else {
+        if (this.isCapturable(dstRow, dstCol)) {
+          moveMatrix[dstRow][dstCol] = CAPTURE
+        }
+        //Stop: bishop can't move past a piece
+        break
+      }
+    }
+    return moveMatrix
+
+  }
+  isCapturable(dstRow, dstCol) {
+    let whiteToMove = this.state.whiteToMove
+    console.log(dstRow, dstCol)
+    if(this.sqIsEmpty(dstRow, dstCol) || !this.sqInBounds(dstRow, dstCol)) {
+      return false
+    }
+    let victimSquare = this.state.board[dstRow][dstCol]
+    return (whiteToMove ? !this.isWhite(victimSquare) : this.isWhite(victimSquare))
+  }
+  sqIsEmpty(i, j) {
+    if (!this.sqInBounds(i, j)) {
+      return null
+    }
+    return (this.state.board[i][j] === '*')
+  }
   getTurnID() {
     return (this.state.whiteToMove ? 'White' : 'Black')
   }
-
-
   getSquare(i, j) {
     return this.state.board[i][j]
   }
-/******
-  When the user clicks on the board, decide what to do
-  TODO: Get a Piece, decide where it can move to, including colision w/ others
-******/
-    /*
-      What should happen when a square is clicked?
-        -Check: if a piece is selected
-          - Check: Is this new (i, j) a different piece?
-            - break
-          - Check: Is this new (i, j) in the selected piece's possible moves?
-            - then place this piece on that sq.
-        -Check: if color matches whose turn it is
-        -Square is highlighted (un-highlight old sq.)
-        -set state: this piece @ i,j is selected
-        -Determine possible moves
-        -Display grey dots
-    */
+  sqInBounds(i, j) {
+    return !(i < 0 || j < 0 || i > 7 || j > 7)
+  }
+  /******
+    When the user clicks on the board, decide what to do
+    TODO: Get a Piece, decide where it can move to, including colision w/ others
+  ******/
+  /*
+    What should happen when a square is clicked?
+      -Check: if a piece is selected
+        - Check: Is this new (i, j) a different piece?
+          - break
+        - Check: Is this new (i, j) in the selected piece's possible moves?
+          - then place this piece on that sq.
+      -Check: if color matches whose turn it is
+      -Square is highlighted (un-highlight old sq.)
+      -set state: this piece @ i,j is selected
+      -Determine possible moves
+      -Display grey dots
+  */
 
   handleClick(i, j) {
     //Get piece @ i, j
@@ -106,29 +376,25 @@ class Game extends React.Component{
   moveDispatcher(i, j) {
     //Depending on the type of piece, call a function
     var ssPieceType = this.state.ssPieceType
-    var possibleMoves = []
-    if (ssPieceType === 'P') {possibleMoves = this.pawnMoves()}
-    else if (ssPieceType === 'R') {possibleMoves = this.rookMoves()}
-    else if (ssPieceType === 'N') {possibleMoves = this.knightMoves()}
-    else if (ssPieceType === 'B') {possibleMoves = this.bishopMoves()}
-    else if (ssPieceType === 'Q') {possibleMoves = this.queenMoves()}
-    else if (ssPieceType === 'K') {possibleMoves = this.kingMoves()}
-    //else no possible moves
-    var coordinate = [i, j]
-    possibleMoves.push([i, j])
-    console.log(possibleMoves)
-    /* For all possible moves, if the dest is a poss move, do it.*/
-    if (coordinate[0] === i && coordinate[1] === j) {
+    let moveMatrix = this.getMoves(ssPieceType)
+    if (moveMatrix[i][j] === AVAILABLE || moveMatrix[i][j] === CAPTURE) {
+      //Todo: Does this move place this player's king in check?
       this.moveSelectedPiece(i, j)
     }
-    /*
-    for () {
-      console.log(move, i)
-      if (move[0] === i && move[1] === j) {
-        this.moveSelectedPiece(i, j)
-      }
-    }
-    */
+    /* For all possible moves, if the dest is a poss move, do it.*/
+  }
+
+  getMoves(pieceType) {
+    let moveMatrix = []
+    if (pieceType === 'P') {moveMatrix = this.pawnMoves()}
+    else if (pieceType === 'R') {moveMatrix = this.rookMoves()}
+    else if (pieceType === 'N') {moveMatrix = this.knightMoves()}
+    else if (pieceType === 'B') {moveMatrix = this.bishopMoves()}
+    else if (pieceType === 'Q') {moveMatrix = this.queenMoves()}
+    else if (pieceType === 'K') {moveMatrix = this.kingMoves()}
+    //else no possible moves
+    console.log(moveMatrix)
+    return moveMatrix
   }
 
   /** Given a state and a destination, update state by moving piece if poss.**/
