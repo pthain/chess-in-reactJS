@@ -8,10 +8,10 @@ class Game extends React.Component{
   constructor(props) {
     super(props)
     this.state = {
-      board: this.initBoard(),
-      history: [],
+      board: this.setBoardNewGame(this.initBoard()),
+      history: [this.setBoardNewGame(this.initBoard())],
       whiteToMove: true,
-      turnCount: 0,
+      turnCount: 1,
       halfTurnCount: 0,
       ssPiece: null,
       ssPieceType: null,
@@ -431,7 +431,7 @@ class Game extends React.Component{
     tmpBoard[ssRow][ssCol] = "*"  //Empty old space
     tmpBoard[i][j] = ssPiece  //move piece to new space
     //console.log(this.state.turnCount)
-    if (this.state.whiteToMove) {
+    if (!this.state.whiteToMove) {
       let newCount = this.state.turnCount + 1
       this.setState({
         turnCount: newCount
@@ -454,11 +454,15 @@ class Game extends React.Component{
   Revert State Click Handler etc.
   ****/
   handleStateClick(direction) {
+    console.log(this.state.halfTurnCount)
+    console.log(this.state.history)
     if (direction === -1) {
       console.log("Attempting to revert to last board state")
+      this.getHistory(this.state.halfTurnCount - 1)
     }
     else {
       console.log("Attempting to move to the next board state")
+      this.getHistory(this.state.halfTurnCount + 1)
     }
   }
 
@@ -555,15 +559,53 @@ class Game extends React.Component{
     }
     return boardState
   }
+  copyBoard(boardState) {
+    let deepCopy = this.initBoard()
+    for (let i = 0; i < deepCopy.length; i++) {
+      for (let j = 0; j < deepCopy.length; j++) {
+          deepCopy[i][j] = boardState[i][j]
+      }
+    }
+    return deepCopy
+  }
   updateHistory() {
+    /* Make a deep copy of the current board */
+    var current = this.copyBoard(this.state.board)
+    var newHistory = this.state.history
+    newHistory.push(current)
     this.setState({
-      history: this.state.history.concat([this.state.halfTurnCount + 100])
+      history: newHistory
     })
+  }
+  getHistory(index) {
+    if (index >= 0 && index < this.state.history.length) {
+      this.setState({
+        board: this.state.history[index],
+        turnCount: (Math.floor(index/2) + 1),
+        halfTurnCount: index,
+      })
+      console.log(this.state.history[index])
+      if ((index % 2) === 0) {
+        console.log("It is now white's turn")
+        this.setState({
+          whiteToMove: true
+        })
+      }
+      else {
+        console.log("It is now black's turn")
+        this.setState({
+          whiteToMove: false
+        })
+      }
+    }
+    else {
+      console.log("No history")
+    }
   }
   resetGame() {
     this.setState({
       board: this.setBoardNewGame(this.initBoard()),
-      history: [],
+      history: [this.setBoardNewGame(this.initBoard())],
       whiteToMove: true,
       turnCount: 0,
       halfTurnCount: 0,
@@ -580,8 +622,6 @@ class Game extends React.Component{
   *********************************************/
   render() {
     //console.log(this.state)
-    console.log(this.state.history)
-    console.log(this.state.halfTurnCount)
     return (
       <div>
         <div className="game-header">
@@ -589,8 +629,8 @@ class Game extends React.Component{
             Whose turn is it: {this.getTurnID()} | Turn: {this.getTurnCount()}
           </div>
           <div>
-            <button id="prev-state-btn" onClick={() => this.handleStateClick(1)} className="state-arrow-button">{"<-"}</button>
-            <button id="next-state-btn" onClick={() => this.handleStateClick(-1)} className="state-arrow-button">{"->"}</button>
+            <button id="prev-state-btn" onClick={() => this.handleStateClick(-1)} className="state-arrow-button">{"<-"}</button>
+            <button id="next-state-btn" onClick={() => this.handleStateClick(1)} className="state-arrow-button">{"->"}</button>
           </div>
           <div>
             <button id="new-game-btn" onClick={() => this.handleNewGameClick()} className="new-game-button">New Game</button>
