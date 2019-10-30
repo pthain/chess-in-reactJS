@@ -8,9 +8,11 @@ class Game extends React.Component{
   constructor(props) {
     super(props)
     this.state = {
-      board: this.setBoardNewGame(this.initBoard()),
+      board: this.initBoard(),
+      history: [],
       whiteToMove: true,
       turnCount: 0,
+      halfTurnCount: 0,
       ssPiece: null,
       ssPieceType: null,
       ssIsWhite: null,
@@ -139,12 +141,23 @@ class Game extends React.Component{
     return moveMatrix
   }
   kingMoves(){
+    var isWhite = this.state.ssIsWhite
     var srcRow = this.state.ssRow
     var srcCol = this.state.ssCol
     var moveMatrix = this.initBoard()
     var maxDist = 1
     moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
     moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
+
+    /*
+    // Castle
+    if (srcCol === 4 && ((isWhite && srcRow === 7) || (!isWhite && srcRow === 0))){
+      //Kingside
+      if (this.sqIsEmpty(srcRow, (srcCol+1))) && this.sqIsEmpty(srcRow, (srcCol+2))) {
+
+      }
+    }*/
+
     return moveMatrix
   }
   columnsAndRows(srcRow, srcCol, moveMatrix, maxDist) {
@@ -327,9 +340,132 @@ class Game extends React.Component{
     }
   }
 
-  /****************************
-   *********Game state*********
-   ****************************/
+  /********************************************
+  ************** Click Handlers ***************
+  *********************************************/
+  /****
+  Square Click Handler etc.
+  ****/
+  /**
+    When the user clicks on the board, decide what to do
+
+    What should happen when a square is clicked?
+      +Check: if a piece is selected
+        - +Check: Is this new (i, j) a different piece?
+          + break
+        + Check: Is this new (i, j) in the selected piece's possible moves?
+          + then place this piece on that sq.
+      +Check: if color matches whose turn it is
+      +set state: this piece @ i,j is selected
+      +Determine possible moves
+      -Square is highlighted (un-highlight old sq.)
+      -Display grey dots
+  **/
+  handleSquareClick(i, j) {
+    //Get piece @ i, j
+    var sqValue = this.getValueAtSquare(i, j)
+    if (sqValue === null) {
+      console.log("clicked sq is null (should not occur)")
+    }
+    //If sqValue is a piece and its that color's move, select it
+    else if (sqValue !== '*' && (this.state.whiteToMove === this.isWhite(sqValue))) {
+      this.selectSquare(i, j, sqValue)
+    }
+
+    //Move the previously selected piece to (i, j) if possible.
+    else if (this.state.ssPiece !== null) {
+      this.moveDispatcher(i, j)
+      this.deselectSquare()
+    }
+    //Always de-select the current square
+  }
+  selectSquare(i, j, piece) {
+    this.setState({
+      ssPiece: piece,
+      ssPieceType: this.getPieceType(piece),
+      ssIsWhite: this.isWhite(piece),
+      ssRow: i,
+      ssCol: j
+    })
+  }
+  deselectSquare() {
+    this.setState({
+      ssPiece: null,
+      ssPieceType: null,
+      ssIsWhite: null,
+      ssRow: -1,
+      ssCol: -1
+    })
+  }
+  moveDispatcher(i, j) {
+    //Depending on the type of piece, call a function
+    var ssPieceType = this.state.ssPieceType
+    let moveMatrix = this.getMoves(ssPieceType)
+    if (moveMatrix[i][j] === AVAILABLE || moveMatrix[i][j] === CAPTURE) {
+      this.moveSelectedPiece(i, j)
+    }
+    /* For all possible moves, if the dest is a poss move, do it.*/
+  }
+  getMoves(pieceType) {
+    let moveMatrix = []
+    if (pieceType === 'P') {moveMatrix = this.pawnMoves()}
+    else if (pieceType === 'R') {moveMatrix = this.rookMoves()}
+    else if (pieceType === 'N') {moveMatrix = this.knightMoves()}
+    else if (pieceType === 'B') {moveMatrix = this.bishopMoves()}
+    else if (pieceType === 'Q') {moveMatrix = this.queenMoves()}
+    else if (pieceType === 'K') {moveMatrix = this.kingMoves()}
+    //else no possible moves
+    //console.log(moveMatrix)
+    return moveMatrix
+  }
+  /**
+    Given a state and a destination, update state by moving piece if poss.
+  **/
+  moveSelectedPiece(i, j) {
+    /* Move this.ssPiece to (i, j)*/
+    var tmpBoard = this.state.board.slice()
+    var ssPiece = this.state.ssPiece
+    var ssRow = this.state.ssRow
+    var ssCol = this.state.ssCol
+
+    tmpBoard[ssRow][ssCol] = "*"  //Empty old space
+    tmpBoard[i][j] = ssPiece  //move piece to new space
+    //console.log(this.state.turnCount)
+    if (this.state.whiteToMove) {
+      let newCount = this.state.turnCount + 1
+      this.setState({
+        turnCount: newCount
+      })
+    }
+    let newHalfCount = this.state.halfTurnCount + 1
+    this.setState({
+      board: tmpBoard,
+      whiteToMove: this.toggleTurnID(),
+      halfTurnCount: newHalfCount
+    })
+    this.updateHistory()
+  }
+
+  handleNewGameClick() {
+    this.resetGame()
+  }
+
+  /****
+  Revert State Click Handler etc.
+  ****/
+  handleStateClick(direction) {
+    if (direction === -1) {
+      console.log("Attempting to revert to last board state")
+    }
+    else {
+      console.log("Attempting to move to the next board state")
+    }
+  }
+
+
+  /**********************************
+   ********* Meta Game Info *********
+   **********************************/
   toggleTurnID() {
     if(this.state.whiteToMove) {
       return false
@@ -419,121 +555,33 @@ class Game extends React.Component{
     }
     return boardState
   }
-
-  /********************************************
-  ************** Click Handlers ***************
-  *********************************************/
-
-  /****
-  Square Click Handler etc.
-  ****/
-  /**
-    When the user clicks on the board, decide what to do
-
-    What should happen when a square is clicked?
-      +Check: if a piece is selected
-        - +Check: Is this new (i, j) a different piece?
-          + break
-        + Check: Is this new (i, j) in the selected piece's possible moves?
-          + then place this piece on that sq.
-      +Check: if color matches whose turn it is
-      +set state: this piece @ i,j is selected
-      +Determine possible moves
-      -Square is highlighted (un-highlight old sq.)
-      -Display grey dots
-  **/
-  handleSquareClick(i, j) {
-    //Get piece @ i, j
-    var sqValue = this.getValueAtSquare(i, j)
-    if (sqValue === null) {
-      console.log("clicked sq is null (should not occur)")
-    }
-    //If sqValue is a piece and its that color's move, select it
-    else if (sqValue !== '*' && (this.state.whiteToMove === this.isWhite(sqValue))) {
-      this.selectSquare(i, j, sqValue)
-    }
-
-    //Move the previously selected piece to (i, j) if possible.
-    else if (this.state.ssPiece !== null) {
-      this.moveDispatcher(i, j)
-      this.deselectSquare()
-    }
-    //Always de-select the current square
-  }
-  selectSquare(i, j, piece) {
+  updateHistory() {
     this.setState({
-      ssPiece: piece,
-      ssPieceType: this.getPieceType(piece),
-      ssIsWhite: this.isWhite(piece),
-      ssRow: i,
-      ssCol: j
+      history: this.state.history.concat([this.state.halfTurnCount + 100])
     })
   }
-  deselectSquare() {
+  resetGame() {
     this.setState({
+      board: this.setBoardNewGame(this.initBoard()),
+      history: [],
+      whiteToMove: true,
+      turnCount: 0,
+      halfTurnCount: 0,
       ssPiece: null,
       ssPieceType: null,
       ssIsWhite: null,
       ssRow: -1,
-      ssCol: -1
-    })
-  }
-  moveDispatcher(i, j) {
-    //Depending on the type of piece, call a function
-    var ssPieceType = this.state.ssPieceType
-    let moveMatrix = this.getMoves(ssPieceType)
-    if (moveMatrix[i][j] === AVAILABLE || moveMatrix[i][j] === CAPTURE) {
-      this.moveSelectedPiece(i, j)
-    }
-    /* For all possible moves, if the dest is a poss move, do it.*/
-  }
-  getMoves(pieceType) {
-    let moveMatrix = []
-    if (pieceType === 'P') {moveMatrix = this.pawnMoves()}
-    else if (pieceType === 'R') {moveMatrix = this.rookMoves()}
-    else if (pieceType === 'N') {moveMatrix = this.knightMoves()}
-    else if (pieceType === 'B') {moveMatrix = this.bishopMoves()}
-    else if (pieceType === 'Q') {moveMatrix = this.queenMoves()}
-    else if (pieceType === 'K') {moveMatrix = this.kingMoves()}
-    //else no possible moves
-    console.log(moveMatrix)
-    return moveMatrix
-  }
-  /**
-    Given a state and a destination, update state by moving piece if poss.
-  **/
-  moveSelectedPiece(i, j) {
-    /* Move this.ssPiece to (i, j)*/
-    var tmpBoard = this.state.board.slice()
-    var ssPiece = this.state.ssPiece
-    var ssRow = this.state.ssRow
-    var ssCol = this.state.ssCol
-
-    tmpBoard[ssRow][ssCol] = "*"  //Empty old space
-    tmpBoard[i][j] = ssPiece  //move piece to new space
-    console.log(this.state.turnCount)
-    if (this.state.whiteToMove) {
-      let newCount = this.state.turnCount + 1
-      this.setState({
-        turnCount: newCount
-      })
-    }
-    this.setState({
-      board: tmpBoard,
-      whiteToMove: this.toggleTurnID(),
+      ssCol: -1,
     })
   }
 
-  /****
-  Revert State Click Handler etc.
-  ****/
-  handleStateClick() {
-    console.log("Attempting to revert to last board state")
-  }
-
-
+  /********************************************
+  ************ Render the Board ***************
+  *********************************************/
   render() {
     //console.log(this.state)
+    console.log(this.state.history)
+    console.log(this.state.halfTurnCount)
     return (
       <div>
         <div className="game-header">
@@ -541,8 +589,11 @@ class Game extends React.Component{
             Whose turn is it: {this.getTurnID()} | Turn: {this.getTurnCount()}
           </div>
           <div>
-            <button id="prev-state" onClick={() => this.handleStateClick(1)} className="state-arrow-button">{"<-"}</button>
-            <button id="next-state" onClick={() => this.handleStateClick(-1)} className="state-arrow-button">{"->"}</button>
+            <button id="prev-state-btn" onClick={() => this.handleStateClick(1)} className="state-arrow-button">{"<-"}</button>
+            <button id="next-state-btn" onClick={() => this.handleStateClick(-1)} className="state-arrow-button">{"->"}</button>
+          </div>
+          <div>
+            <button id="new-game-btn" onClick={() => this.handleNewGameClick()} className="new-game-button">New Game</button>
           </div>
         </div>
 
