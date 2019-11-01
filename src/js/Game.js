@@ -454,8 +454,8 @@ class Game extends React.Component{
   Revert State Click Handler etc.
   ****/
   handleStateClick(direction) {
-    console.log(this.state.halfTurnCount)
-    console.log(this.state.history)
+    //console.log(this.state.halfTurnCount)
+    //console.log(this.state.history)
     if (direction === -1) {
       console.log("Attempting to revert to last board state")
       this.getHistory(this.state.halfTurnCount - 1)
@@ -580,11 +580,10 @@ class Game extends React.Component{
   getHistory(index) {
     if (index >= 0 && index < this.state.history.length) {
       this.setState({
-        board: this.state.history[index],
+        board: this.copyBoard(this.state.history[index]),
         turnCount: (Math.floor(index/2) + 1),
         halfTurnCount: index,
       })
-      console.log(this.state.history[index])
       if ((index % 2) === 0) {
         console.log("It is now white's turn")
         this.setState({
@@ -622,6 +621,9 @@ class Game extends React.Component{
   *********************************************/
   render() {
     //console.log(this.state)
+    console.log(this.state.halfTurnCount)
+    console.log(this.state.history)
+    console.log(this.state.history[this.state.halfTurnCount])
     return (
       <div>
         <div className="game-header">
