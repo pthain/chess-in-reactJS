@@ -431,19 +431,35 @@ class Game extends React.Component{
     tmpBoard[ssRow][ssCol] = "*"  //Empty old space
     tmpBoard[i][j] = ssPiece  //move piece to new space
     //console.log(this.state.turnCount)
+    let newHalfCount = this.state.halfTurnCount + 1
+    //Because this.setState is asynchronus, we need a callback atomic function
+    /*
+    if (newHalfCount < this.state.history.length) {
+
+      console.log(newHalfCount, this.state.history.length)
+      console.log("L443: ", this.state.history.slice(0, newHalfCount))
+      var newHistory = this.state.history.slice(0, newHalfCount)
+      this.setState({
+        history: [],
+      })
+    }
+    else {
+      this.updateHistory()
+    }
+  }
+    */
     if (!this.state.whiteToMove) {
       let newCount = this.state.turnCount + 1
       this.setState({
         turnCount: newCount
       })
     }
-    let newHalfCount = this.state.halfTurnCount + 1
     this.setState({
       board: tmpBoard,
       whiteToMove: this.toggleTurnID(),
       halfTurnCount: newHalfCount
     })
-    this.updateHistory()
+    this.updateHistory(newHalfCount)
   }
 
   handleNewGameClick() {
@@ -454,8 +470,6 @@ class Game extends React.Component{
   Revert State Click Handler etc.
   ****/
   handleStateClick(direction) {
-    //console.log(this.state.halfTurnCount)
-    //console.log(this.state.history)
     if (direction === -1) {
       console.log("Attempting to revert to last board state")
       this.getHistory(this.state.halfTurnCount - 1)
@@ -568,10 +582,16 @@ class Game extends React.Component{
     }
     return deepCopy
   }
-  updateHistory() {
-    /* Make a deep copy of the current board */
+  updateHistory(newHalfCount) {
     var current = this.copyBoard(this.state.board)
-    var newHistory = this.state.history
+    var newHistory = []
+    //Re-Write history if we go backwards, and make a different move
+    if (newHalfCount < this.state.history.length) {
+      newHistory = this.state.history.slice(0, newHalfCount)
+    }
+    else {
+      newHistory = this.state.history
+    }
     newHistory.push(current)
     this.setState({
       history: newHistory
@@ -584,6 +604,7 @@ class Game extends React.Component{
         turnCount: (Math.floor(index/2) + 1),
         halfTurnCount: index,
       })
+      console.log(this.state.history[index])
       if ((index % 2) === 0) {
         console.log("It is now white's turn")
         this.setState({
@@ -620,10 +641,7 @@ class Game extends React.Component{
   ************ Render the Board ***************
   *********************************************/
   render() {
-    //console.log(this.state)
-    console.log(this.state.halfTurnCount)
     console.log(this.state.history)
-    console.log(this.state.history[this.state.halfTurnCount])
     return (
       <div>
         <div className="game-header">
