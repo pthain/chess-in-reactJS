@@ -299,7 +299,7 @@ class Game extends React.Component{
   }
 
   /********************************************
-  ******* Piece & Movement Information ********
+  ******* Piece & Movement Helpers ************
   *********************************************/
   isCapturable(dstRow, dstCol) {
     let whiteToMove = this.state.whiteToMove
@@ -339,7 +339,51 @@ class Game extends React.Component{
       }
     }
   }
+  /*
+  checkEnPassant() {
+    var isWhite = this.state.ssIsWhite
+    var srcRow = this.state.ssRow
+    var srcCol = this.state.ssCol
+    var current = this.state.board
+    var previous = this.state.history[this.state.halfTurnCount]
+    console.log(current, previous)
+    let dir = 0
+    let startrow = -1
+    if (isWhite) {
+      startrow = 6
+      dir = -1
+    }
+    else {
+      startrow = 1
+      dir = 1
+    }
 
+    if (srcRow !== startrow) {
+      return false
+    }
+    //left
+    if ((srcCol - 1) >= 0) {
+      let leftNeighbor = current[srcRow][srcCol - 1]
+      if ((isWhite && leftNeighbor === 'Pb') || (!isWhite && (leftNeighbor === 'Pw') )) {
+        if (previous[srcRow + (2*dir)][srcCol] === '') {}
+      }
+    }
+
+    if ((srcCol + 1) <= 7) {
+
+    }
+    //right
+    /*
+      Check if this pawn is on row[startrow + 3]
+      Check if enemy pawn is left or right current position
+      for left:
+        Check history[halfTurnCount - 1]
+        if (col - 1 at row + 2*dir )
+
+
+  }
+  */
+  
   /********************************************
   ************** Click Handlers ***************
   *********************************************/
