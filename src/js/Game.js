@@ -141,7 +141,6 @@ class Game extends React.Component{
     return moveMatrix
   }
   kingMoves(){
-    var isWhite = this.state.ssIsWhite
     var srcRow = this.state.ssRow
     var srcCol = this.state.ssCol
     var moveMatrix = this.initBoard()
@@ -383,7 +382,7 @@ class Game extends React.Component{
 
   }
   */
-  
+
   /********************************************
   ************** Click Handlers ***************
   *********************************************/
