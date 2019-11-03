@@ -4,6 +4,7 @@ import Piece from './Piece.js'
 
 const CAPTURE = 'x'
 const AVAILABLE = '+'
+const ENPASSANT = 'e'
 
 class Game extends React.Component{
   constructor(props) {
@@ -32,34 +33,28 @@ class Game extends React.Component{
       //5th rank w: (row === 3) b: (row === 4)
       //&& last move was enemy pawn move two on col j+1 or j-1
     //Otherwise -> move one
-    var isWhite = this.state.ssIsWhite
-    var srcRow = this.state.ssRow
-    var srcCol = this.state.ssCol
+    var thisPawn = this.state.ssPiece
+    var isWhite = thisPawn.getIsWhite()
+    var srcRow = thisPawn.getRow()
+    var srcCol = thisPawn.getCol()
     var moveMatrix = this.initBoard()
 
     let dir = 0
-    let startrow = -1
     let dstRow = -1
     let dstCol = -1
 
-    //White
-    if (isWhite) {
-      startrow = 6
-      dir = -1
-    }
-    else {
-      startrow = 1
-      dir = 1
-    }
+    //Set direction the pawn should move
+    dir = (isWhite ? -1 : 1)
+
     //Mark space one ahead
     dstRow = srcRow + dir
     if (this.sqIsEmpty(dstRow, srcCol)) {
       moveMatrix[dstRow][srcCol] = AVAILABLE
-    }
-    //Mark a move-two if possible
-    dstRow = srcRow + (2 * dir)
-    if (srcRow === startrow && this.sqIsEmpty(dstRow, srcCol)) {
-      moveMatrix[dstRow][srcCol] = AVAILABLE
+      //Mark a move-two if possible
+      dstRow = dstRow + dir
+      if ((!(thisPawn.getHasMoved())) && this.sqIsEmpty(dstRow, srcCol)) {
+        moveMatrix[dstRow][srcCol] = AVAILABLE
+      }
     }
     //Mark a capture if possible
     dstRow = srcRow + dir
@@ -75,7 +70,41 @@ class Game extends React.Component{
         moveMatrix[dstRow][dstCol] = CAPTURE
       }
     }
-    //Look for checks
+    //Check for checkEnPassant
+    //Left Neighbor
+    let leftCol = srcCol - 1
+    if (leftCol >= 0) {
+      let leftNeighbor = this.getValueAtSquare(srcRow, leftCol)
+      if ((leftNeighbor !== '*') && (leftNeighbor.getPieceType() === 'P') && (this.state.whiteToMove !== leftNeighbor.getIsWhite())) {
+        //If enemy moved two spaces forward on its last move and it was LAST turn
+        if (
+          leftNeighbor.getCol() === leftNeighbor.getPrevCol() &&
+          leftNeighbor.getRow() === (leftNeighbor.getPrevRow() + (2 * -dir)) &&
+          leftNeighbor.getFirstMoveTS() === (this.state.halfTurnCount - 1)
+        ) {
+          dstRow = srcRow + dir
+          dstCol = leftCol
+          moveMatrix[dstRow][dstCol] = ENPASSANT
+        }
+      }
+    }
+    let rightCol = srcCol + 1
+    if (rightCol <= 7) {
+      let rightNeighbor = this.getValueAtSquare(srcRow, rightCol)
+      if ((rightNeighbor !== '*') && (rightNeighbor.getPieceType() === 'P') && (this.state.whiteToMove !== rightNeighbor.getIsWhite())) {
+        //If enemy moved two spaces forward on its last move and it was LAST turn
+        if (
+          rightNeighbor.getCol() === rightNeighbor.getPrevCol() &&
+          rightNeighbor.getRow() === (rightNeighbor.getPrevRow() + (2 * -dir)) &&
+          rightNeighbor.getFirstMoveTS() === (this.state.halfTurnCount - 1)
+        ) {
+          dstRow = srcRow + dir
+          dstCol = rightCol
+          moveMatrix[dstRow][dstCol] = ENPASSANT
+        }
+      }
+    }
+    //Look for checks i.e. update dangerBoard... Maybe not here -> revealed attack
 
     return moveMatrix
   }
@@ -306,8 +335,13 @@ class Game extends React.Component{
     if(this.sqIsEmpty(dstRow, dstCol) || !this.sqInBounds(dstRow, dstCol)) {
       return false
     }
-    let victimSquare = this.getValueAtSquare(dstRow, dstCol)
-    return (whiteToMove ? !this.isWhite(victimSquare) : this.isWhite(victimSquare))
+    let victim = this.getValueAtSquare(dstRow, dstCol)
+    if ((whiteToMove && !(victim.getIsWhite())) || (!whiteToMove && victim.getIsWhite())) {
+      return true
+    }
+    else {
+      return false
+    }
   }
   sqIsEmpty(i, j) {
     if (!this.sqInBounds(i, j)) {
@@ -341,50 +375,6 @@ class Game extends React.Component{
     }
   }
   */
-  /*
-  checkEnPassant() {
-    var isWhite = this.state.ssIsWhite
-    var srcRow = this.state.ssRow
-    var srcCol = this.state.ssCol
-    var current = this.state.board
-    var previous = this.state.history[this.state.halfTurnCount]
-    console.log(current, previous)
-    let dir = 0
-    let startrow = -1
-    if (isWhite) {
-      startrow = 6
-      dir = -1
-    }
-    else {
-      startrow = 1
-      dir = 1
-    }
-
-    if (srcRow !== startrow) {
-      return false
-    }
-    //left
-    if ((srcCol - 1) >= 0) {
-      let leftNeighbor = current[srcRow][srcCol - 1]
-      if ((isWhite && leftNeighbor === 'Pb') || (!isWhite && (leftNeighbor === 'Pw') )) {
-        if (previous[srcRow + (2*dir)][srcCol] === '') {}
-      }
-    }
-
-    if ((srcCol + 1) <= 7) {
-
-    }
-    //right
-    /*
-      Check if this pawn is on row[startrow + 3]
-      Check if enemy pawn is left or right current position
-      for left:
-        Check history[halfTurnCount - 1]
-        if (col - 1 at row + 2*dir )
-
-
-  }
-  */
 
   /********************************************
   ************** Click Handlers ***************
@@ -414,11 +404,8 @@ class Game extends React.Component{
       console.log("clicked sq is null (should not occur)")
     }
     //If sqValue is a piece and its that color's move, select it
-    if(sqValue !== '*' && typeof(sqValue) === 'Piece') {
-      //console.log('It is a piece!')
-      if (sqValue.isWhite() === this.state.whiteToMove) {
-        this.selectSquare(sqValue)
-      }
+    if(sqValue !== '*' && sqValue.getIsWhite() === this.state.whiteToMove) {
+      this.selectSquare(sqValue)
     }
     else if (this.state.ssPiece !== null) {
       this.moveDispatcher(i, j)
@@ -478,16 +465,19 @@ class Game extends React.Component{
     if (moveMatrix[i][j] === AVAILABLE || moveMatrix[i][j] === CAPTURE) {
       this.moveSelectedPiece(i, j)
     }
+    else if (moveMatrix[i][j] === ENPASSANT) {
+      this.moveEnpassant(i, j)
+    }
   }
   getMoves(ssPiece) {
     let moveMatrix = []
     let pieceType = ssPiece.getPieceType()
-    if (pieceType === 'P') {moveMatrix = this.pawnMoves(ssPiece)}
-    else if (pieceType === 'R') {moveMatrix = this.rookMoves(ssPiece)}
-    else if (pieceType === 'N') {moveMatrix = this.knightMoves(ssPiece)}
-    else if (pieceType === 'B') {moveMatrix = this.bishopMoves(ssPiece)}
-    else if (pieceType === 'Q') {moveMatrix = this.queenMoves(ssPiece)}
-    else if (pieceType === 'K') {moveMatrix = this.kingMoves(ssPiece)}
+    if (pieceType === 'P') {moveMatrix = this.pawnMoves()}
+    else if (pieceType === 'R') {moveMatrix = this.rookMoves()}
+    else if (pieceType === 'N') {moveMatrix = this.knightMoves()}
+    else if (pieceType === 'B') {moveMatrix = this.bishopMoves()}
+    else if (pieceType === 'Q') {moveMatrix = this.queenMoves()}
+    else if (pieceType === 'K') {moveMatrix = this.kingMoves()}
     //else no possible moves
     //console.log(moveMatrix)
     return moveMatrix
@@ -501,9 +491,12 @@ class Game extends React.Component{
     var ssPiece = this.state.ssPiece
     var ssRow = ssPiece.row
     var ssCol = ssPiece.col
+    var ts = this.state.halfTurnCount  //Timestamp of this move
 
     tmpBoard[ssRow][ssCol] = "*"  //Empty old space
     tmpBoard[i][j] = ssPiece  //move piece to new space
+    console.log("Move piece: ", i, j, ts)
+    ssPiece.movePiece(i,j,ts)
     //console.log(this.state.turnCount)
     let newHalfCount = this.state.halfTurnCount + 1
     if (!this.state.whiteToMove) {
@@ -519,6 +512,42 @@ class Game extends React.Component{
     })
     this.updateHistory(newHalfCount)
   }
+
+  moveEnpassant(i, j) {
+    /* Move this.ssPiece to (i, j)*/
+    var tmpBoard = this.state.board.slice()
+    var ssPiece = this.state.ssPiece
+    var ssRow = ssPiece.row
+    var ssCol = ssPiece.col
+    var ts = this.state.halfTurnCount  //Timestamp of this move
+
+    if (ssPiece.getIsWhite()) {
+      //Remove piece Row + 1
+      tmpBoard[i + 1][j] = '*'
+    }
+    else {
+      tmpBoard[i - 1][j] = '*'
+    }
+    tmpBoard[ssRow][ssCol] = "*"  //Empty old space
+    tmpBoard[i][j] = ssPiece  //move piece to new space
+    console.log("Move piece: ", i, j, ts)
+    ssPiece.movePiece(i,j,ts)
+    //console.log(this.state.turnCount)
+    let newHalfCount = this.state.halfTurnCount + 1
+    if (!this.state.whiteToMove) {
+      let newCount = this.state.turnCount + 1
+      this.setState({
+        turnCount: newCount
+      })
+    }
+    this.setState({
+      board: tmpBoard,
+      whiteToMove: this.toggleTurnID(),
+      halfTurnCount: newHalfCount
+    })
+    this.updateHistory(newHalfCount)
+  }
+
 
   handleNewGameClick() {
     this.resetGame()
@@ -712,7 +741,7 @@ class Game extends React.Component{
   ************ Render the Board ***************
   *********************************************/
   render() {
-    console.log(this.state.history)
+    //console.log(this.state.history)
     return (
       <div className="game-container">
         <div className="game-header">

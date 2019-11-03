@@ -23,18 +23,28 @@ class Piece {
   getIsWhite() {
     return this.isWhite
   }
+  getRow(){
+    return this.row
+  }
+  getCol(){
+    return this.col
+  }
   getPrevRow() {
     return this.prevRow
   }
   getPrevCol() {
-    return this.prevRow
+    return this.prevCol
   }
-  hasMoved() {
+  getFirstMoveTS() {
+    return this.firstMoveTimestamp
+  }
+  getHasMoved() {
     return this.hasMoved
   }
-  movePiece(dstRow, dstCol) {
+  movePiece(dstRow, dstCol, ts) {
     if (!this.hasMoved) {
       this.hasMoved = true
+      this.firstMoveTimestamp = ts
     }
     this.prevRow = this.row
     this.prevCol = this.col
