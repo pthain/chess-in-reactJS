@@ -1,5 +1,6 @@
 import React from 'react'
 import Board from './Board.js'
+import Piece from './Piece.js'
 
 const CAPTURE = 'x'
 const AVAILABLE = '+'
