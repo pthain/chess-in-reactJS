@@ -1,6 +1,8 @@
 class Piece {
   constructor(pieceId, row, col) {
     this.pieceId = pieceId
+    this.pieceType = parsePieceType(pieceId)
+    this.isWhite = parseIsWhite(pieceId)
     this.row = row
     this.col = col
     this.hasMoved = false
@@ -8,8 +10,18 @@ class Piece {
     this.prevCol = null
   }
 
+  /*initLocation(startRow, startCol) {
+    this.row = startRow
+    this.col = startCol
+  }*/
   getPieceId() {
     return this.pieceId
+  }
+  getPieceType() {
+    return this.pieceType
+  }
+  getIsWhite() {
+    return this.isWhite
   }
   getPrevRow() {
     return this.prevRow
@@ -31,5 +43,22 @@ class Piece {
   }
 
 }
+
+function parseIsWhite(pieceId) {
+  if (pieceId !== null && pieceId.length > 1) {
+    if (pieceId.charAt(1) === 'w') {
+      return true
+    }
+    else {
+      return false
+    }
+  }
+}
+
+function parsePieceType(pieceId) {
+    if(pieceId !== null && pieceId.length > 0) {
+      return pieceId.charAt(0)
+    }
+  }
 
 export default Piece

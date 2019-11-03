@@ -2,7 +2,7 @@ import React from 'react'
 import '../css/Board.css';
 
 /* Import Pieces */
-//import Piece from './Pieces/Piece.js';
+import Piece from './Piece.js';
 import Pawn from './PieceComponents/Pawn.js';
 import Rook from './PieceComponents/Rook.js';
 import Knight from './PieceComponents/Knight.js';
@@ -66,72 +66,43 @@ class Board extends React.Component {
   }
   /* Use State to determine if a piece is on this square */
   renderSquareContent(i, j, sqValue) {
+    var piece = '*'
+    var isWhite = "no color"
     if(sqValue === undefined) {
       return "?"
     }
-    var piece = sqValue.charAt(0)
-    var color = "no color"
-    if (sqValue.length > 1) {
-      color = sqValue.charAt(1)
+    else if (sqValue !== '*') {
+      var piece = sqValue.getPieceType()
+      var isWhite = sqValue.getIsWhite()
     }
 
     return (
       <div className='game-piece'>
-        {this.pieceDispatcher(piece, color)}
+        {this.pieceDispatcher(piece, isWhite)}
       </div>
     )
   }
-  pieceDispatcher(piece, color) {
-    if (color === "no color") {
+  pieceDispatcher(piece, isWhite) {
+    if (isWhite === "no color") {
       return ""
     }
     if (piece === 'P') {
-      if (color === 'w') {
-        return(<Pawn isWhite = {true}/>)
-      }
-      else {
-        return(<Pawn isWhite = {false}/>)
-      }
+      return(<Pawn isWhite = {isWhite}/>)
     }
     if (piece === 'R') {
-      if (color === 'w') {
-        return(<Rook isWhite = {true}/>)
-      }
-      else {
-        return(<Rook isWhite = {false}/>)
-      }
+      return(<Rook isWhite = {isWhite}/>)
     }
     if (piece === 'N') {
-      if (color === 'w') {
-        return(<Knight isWhite = {true}/>)
-      }
-      else {
-        return(<Knight isWhite = {false}/>)
-      }
+      return(<Knight isWhite = {isWhite}/>)
     }
     if (piece === 'B') {
-      if (color === 'w') {
-        return(<Bishop isWhite = {true}/>)
-      }
-      else {
-        return(<Bishop isWhite = {false}/>)
-      }
+      return(<Bishop isWhite = {isWhite}/>)
     }
     if (piece === 'Q') {
-      if (color === 'w') {
-        return(<Queen isWhite = {true}/>)
-      }
-      else {
-        return(<Queen isWhite = {false}/>)
-      }
+      return(<Queen isWhite = {isWhite}/>)
     }
     if (piece === 'K') {
-      if (color === 'w') {
-        return(<King isWhite = {true}/>)
-      }
-      else {
-        return(<King isWhite = {false}/>)
-      }
+      return(<King isWhite = {isWhite}/>)
     }
   }
   /* Update the board if the state changes */
