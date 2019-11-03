@@ -51,7 +51,7 @@ class Board extends React.Component {
     return (
       <div onClick={()=>this.props.onClick(i, j)} className={this.getLightOrDark(i, j)}>
         <div className="square-content">
-          {this.renderSquareContent(i, j, this.props.board[i][j])}
+          {this.renderSquareContent(this.props.board[i][j])}
         </div>
       </div>
     )
@@ -65,7 +65,7 @@ class Board extends React.Component {
     }
   }
   /* Use State to determine if a piece is on this square */
-  renderSquareContent(i, j, sqValue) {
+  renderSquareContent(sqValue) {
     var piece = '*'
     var isWhite = "no color"
     if(sqValue === undefined) {

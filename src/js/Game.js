@@ -324,6 +324,7 @@ class Game extends React.Component{
   sqInBounds(i, j) {
     return !(i < 0 || j < 0 || i > 7 || j > 7)
   }
+  /*
   getPieceType(piece) {
     if(piece !== null && piece.length > 0) {
       return piece.charAt(0)
@@ -339,6 +340,7 @@ class Game extends React.Component{
       }
     }
   }
+  */
   /*
   checkEnPassant() {
     var isWhite = this.state.ssIsWhite
@@ -407,10 +409,29 @@ class Game extends React.Component{
   **/
   handleSquareClick(i, j) {
     //Get piece @ i, j
-    var sqValue = this.getValueAtSquare(i, j)
+    let sqValue = this.getValueAtSquare(i, j)
     if (sqValue === null) {
       console.log("clicked sq is null (should not occur)")
     }
+    //If sqValue is a piece and its that color's move, select it
+    if(sqValue !== '*' && typeof(sqValue) === 'Piece') {
+      //console.log('It is a piece!')
+      if (sqValue.isWhite() === this.state.whiteToMove) {
+        this.selectSquare(sqValue)
+      }
+    }
+    else if (this.state.ssPiece !== null) {
+      this.moveDispatcher(i, j)
+      this.deselectSquare()
+    }
+  }
+    /*
+    //If not a * then a piece exists
+      //If a piece exists, is it a piece for this player
+        //If yes, store the piece
+    //Otherwise, if a piece is already seleceted
+      //whether empty or enemy piece, try to move
+      //de-select the square
     //If sqValue is a piece and its that color's move, select it
     else if (sqValue !== '*' && (this.state.whiteToMove === this.isWhite(sqValue))) {
       this.selectSquare(i, j, sqValue)
@@ -423,7 +444,13 @@ class Game extends React.Component{
     }
     //Always de-select the current square
   }
-  selectSquare(i, j, piece) {
+    */
+  selectSquare(piece) {
+    this.setState({
+      ssPiece: piece
+    })
+  }
+    /*
     this.setState({
       ssPiece: piece,
       ssPieceType: this.getPieceType(piece),
@@ -431,33 +458,36 @@ class Game extends React.Component{
       ssRow: i,
       ssCol: j
     })
-  }
+    */
   deselectSquare() {
     this.setState({
       ssPiece: null,
+    })
+  }
+  /*
       ssPieceType: null,
       ssIsWhite: null,
       ssRow: -1,
       ssCol: -1
     })
   }
+  */
   moveDispatcher(i, j) {
-    //Depending on the type of piece, call a function
-    var ssPieceType = this.state.ssPieceType
-    let moveMatrix = this.getMoves(ssPieceType)
+    //Get the possible moves for this piece, and see if (i, j) is possible
+    let moveMatrix = this.getMoves(this.state.ssPiece)
     if (moveMatrix[i][j] === AVAILABLE || moveMatrix[i][j] === CAPTURE) {
       this.moveSelectedPiece(i, j)
     }
-    /* For all possible moves, if the dest is a poss move, do it.*/
   }
-  getMoves(pieceType) {
+  getMoves(ssPiece) {
     let moveMatrix = []
-    if (pieceType === 'P') {moveMatrix = this.pawnMoves()}
-    else if (pieceType === 'R') {moveMatrix = this.rookMoves()}
-    else if (pieceType === 'N') {moveMatrix = this.knightMoves()}
-    else if (pieceType === 'B') {moveMatrix = this.bishopMoves()}
-    else if (pieceType === 'Q') {moveMatrix = this.queenMoves()}
-    else if (pieceType === 'K') {moveMatrix = this.kingMoves()}
+    let pieceType = ssPiece.getPieceType()
+    if (pieceType === 'P') {moveMatrix = this.pawnMoves(ssPiece)}
+    else if (pieceType === 'R') {moveMatrix = this.rookMoves(ssPiece)}
+    else if (pieceType === 'N') {moveMatrix = this.knightMoves(ssPiece)}
+    else if (pieceType === 'B') {moveMatrix = this.bishopMoves(ssPiece)}
+    else if (pieceType === 'Q') {moveMatrix = this.queenMoves(ssPiece)}
+    else if (pieceType === 'K') {moveMatrix = this.kingMoves(ssPiece)}
     //else no possible moves
     //console.log(moveMatrix)
     return moveMatrix
@@ -469,29 +499,13 @@ class Game extends React.Component{
     /* Move this.ssPiece to (i, j)*/
     var tmpBoard = this.state.board.slice()
     var ssPiece = this.state.ssPiece
-    var ssRow = this.state.ssRow
-    var ssCol = this.state.ssCol
+    var ssRow = ssPiece.row
+    var ssCol = ssPiece.col
 
     tmpBoard[ssRow][ssCol] = "*"  //Empty old space
     tmpBoard[i][j] = ssPiece  //move piece to new space
     //console.log(this.state.turnCount)
     let newHalfCount = this.state.halfTurnCount + 1
-    //Because this.setState is asynchronus, we need a callback atomic function
-    /*
-    if (newHalfCount < this.state.history.length) {
-
-      console.log(newHalfCount, this.state.history.length)
-      console.log("L443: ", this.state.history.slice(0, newHalfCount))
-      var newHistory = this.state.history.slice(0, newHalfCount)
-      this.setState({
-        history: [],
-      })
-    }
-    else {
-      this.updateHistory()
-    }
-  }
-    */
     if (!this.state.whiteToMove) {
       let newCount = this.state.turnCount + 1
       this.setState({
@@ -570,47 +584,59 @@ class Game extends React.Component{
         /* Place pieces */
         //Black Pawns
         if (i === 1) {
-            boardState[i][j] = 'Pb'
+            //boardState[i][j] = 'Pb'
+            boardState[i][j] = new Piece('Pb', i, j)
         }
         //Black homerow
         if (i === 0) {
           if (j === 0 || j === 7) {
-            boardState[i][j] = 'Rb'
+            //boardState[i][j] = 'Rb'
+            boardState[i][j] = new Piece('Rb', i, j)
           }
           if (j === 1 || j === 6) {
-            boardState[i][j] = 'Nb'
+            //boardState[i][j] = 'Nb'
+            boardState[i][j] = new Piece('Nb', i, j)
           }
           if (j === 2 || j === 5) {
-            boardState[i][j] = 'Bb'
+            //boardState[i][j] = 'Bb'
+            boardState[i][j] = new Piece('Bb', i, j)
           }
           if (j === 3) {
-            boardState[i][j] = 'Qb'
+            //boardState[i][j] = 'Qb'
+            boardState[i][j] = new Piece('Qb', i, j)
           }
           if (j === 4) {
-            boardState[i][j] = 'Kb'
+            //boardState[i][j] = 'Kb'
+            boardState[i][j] = new Piece('Kb', i, j)
           }
         }
 
         //White pawns
         if (i === 6) {
-            boardState[i][j] = 'Pw'
+            //boardState[i][j] = 'Pw'
+            boardState[i][j] = new Piece('Pw', i, j)
         }
         //White homerow
         if (i === 7) {
           if (j === 0 || j === 7) {
-            boardState[i][j] = 'Rw'
+            //boardState[i][j] = 'Rw'
+            boardState[i][j] = new Piece('Rw', i, j)
           }
           if (j === 1 || j === 6) {
-            boardState[i][j] = 'Nw'
+            //boardState[i][j] = 'Nw'
+            boardState[i][j] = new Piece('Nw', i, j)
           }
           if (j === 2 || j === 5) {
-            boardState[i][j] = 'Bw'
+            //boardState[i][j] = 'Bw'
+            boardState[i][j] = new Piece('Bw', i, j)
           }
           if (j === 3) {
-            boardState[i][j] = 'Qw'
+            //boardState[i][j] = 'Qw'
+            boardState[i][j] = new Piece('Qw', i, j)
           }
           if (j === 4) {
-            boardState[i][j] = 'Kw'
+            //boardState[i][j] = 'Kw'
+            boardState[i][j] = new Piece('Kw', i, j)
           }
         }
       }
@@ -622,6 +648,7 @@ class Game extends React.Component{
     for (let i = 0; i < deepCopy.length; i++) {
       for (let j = 0; j < deepCopy.length; j++) {
           deepCopy[i][j] = boardState[i][j]
+          //TODO deepCopy the pieces? Yea
       }
     }
     return deepCopy
@@ -687,7 +714,7 @@ class Game extends React.Component{
   render() {
     console.log(this.state.history)
     return (
-      <div>
+      <div className="game-container">
         <div className="game-header">
           <div id="turn-id">
             Whose turn is it: {this.getTurnID()} | Turn: {this.getTurnCount()}
