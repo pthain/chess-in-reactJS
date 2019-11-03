@@ -1,3 +1,23 @@
+.game-container{
+  height: 100vh;
+  display: flex;
+  flex-flow: column;
+  overflow-y: scroll;
+}
+
+.game-header {
+  display: grid;
+  grid-auto-flow: column;
+  justify-content: center;
+  grid-gap: 0 1em;
+  border: 3px #05050d solid;
+  background: #b5651d
+}
+
+#turn-id {
+  color: #ff0
+}
+
 .board-container{
   height: 100%;
   border: #050505 3px solid;
@@ -6,7 +26,7 @@
   flex-flow: row;           /*Items in this container are aligned in a row*/
   justify-content: center;  /*Any items in this container will be centered
                             Horizontally. */
-  align-items: flex-start;  /*Any items in this container will be anchored to
+  align-items: center;  /*Any items in this container will be anchored to
                             the start of this container Vertically. */
 }
 
@@ -61,17 +81,4 @@
 }
 .dark {
   background: #666;
-}
-
-.game-header {
-  display: grid;
-  grid-auto-flow: column;
-  justify-content: center;
-  grid-gap: 0 1em;
-  border: 3px #05050d solid;
-  background: #b5651d
-}
-
-#turn-id {
-  color: #ff0
 }
