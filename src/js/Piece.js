@@ -65,6 +65,10 @@ class Piece {
       this.pieceId = 'Qw'
       this.pieceType = 'Q'
     }
+    else {
+      this.pieceId = 'Qb'
+      this.pieceType = 'Q'
+    }
   }
 }
 
