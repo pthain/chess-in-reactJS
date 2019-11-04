@@ -8,6 +8,7 @@ class Piece {
     this.hasMoved = false
     this.prevRow = null
     this.prevCol = null
+    this.firstMoveTimestamp = -1
   }
 
   /*initLocation(startRow, startCol) {
@@ -50,6 +51,14 @@ class Piece {
     this.prevCol = this.col
     this.row = dstRow
     this.col = dstCol
+  }
+  deepCopy() {
+    var pieceCopy = new Piece(this.pieceId, this.row, this.col)
+    pieceCopy.hasMoved = this.hasMoved
+    pieceCopy.prevRow = this.prevRow
+    pieceCopy.prevCol = this.prevCol
+    pieceCopy.firstMoveTimestamp = this.firstMoveTimestamp
+    return pieceCopy
   }
 
 }

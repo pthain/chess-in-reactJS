@@ -5,6 +5,7 @@ import Piece from './Piece.js'
 const CAPTURE = 'x'
 const AVAILABLE = '+'
 const ENPASSANT = 'e'
+const CASTLE = 'c'
 
 class Game extends React.Component{
   constructor(props) {
@@ -16,23 +17,12 @@ class Game extends React.Component{
       turnCount: 1,
       halfTurnCount: 0,
       ssPiece: null,
-      ssPieceType: null,
-      ssIsWhite: null,
-      ssRow: -1,
-      ssCol: -1,
     }
   }
   /********************************************
   *********** Piece Movement Rules ************
   *********************************************/
   pawnMoves() {
-    //Backrow -> promotion
-    //Startrow -> move two
-    //Capture -> move row+1 && col-1 or col+1
-    //En passant:
-      //5th rank w: (row === 3) b: (row === 4)
-      //&& last move was enemy pawn move two on col j+1 or j-1
-    //Otherwise -> move one
     var thisPawn = this.state.ssPiece
     var isWhite = thisPawn.getIsWhite()
     var srcRow = thisPawn.getRow()
@@ -64,17 +54,18 @@ class Game extends React.Component{
         moveMatrix[dstRow][dstCol] = CAPTURE
       }
     }
-    dstCol = srcCol + 1
+    dstCol = srcCol + 1 //Right
     if (dstCol <= 7) {
       if (!this.sqIsEmpty(dstRow, dstCol) && this.isCapturable(dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = CAPTURE
       }
     }
     //Check for checkEnPassant
-    //Left Neighbor
+    //Left
     let leftCol = srcCol - 1
     if (leftCol >= 0) {
       let leftNeighbor = this.getValueAtSquare(srcRow, leftCol)
+      //If space to the left has an enemy pawn
       if ((leftNeighbor !== '*') && (leftNeighbor.getPieceType() === 'P') && (this.state.whiteToMove !== leftNeighbor.getIsWhite())) {
         //If enemy moved two spaces forward on its last move and it was LAST turn
         if (
@@ -88,6 +79,7 @@ class Game extends React.Component{
         }
       }
     }
+    //Right
     let rightCol = srcCol + 1
     if (rightCol <= 7) {
       let rightNeighbor = this.getValueAtSquare(srcRow, rightCol)
@@ -109,10 +101,10 @@ class Game extends React.Component{
     return moveMatrix
   }
   knightMoves(){
-    var srcRow = this.state.ssRow
-    var srcCol = this.state.ssCol
+    var thisKnight = this.state.ssPiece
+    var srcRow = thisKnight.getRow()
+    var srcCol = thisKnight.getCol()
     var moveMatrix = this.initBoard()
-
 
     let dstRow = -1
     let dstCol = -1
@@ -138,32 +130,34 @@ class Game extends React.Component{
       else if (this.sqIsEmpty(dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
-      isCapturablePiece = this.isCapturable(dstRow, dstCol)
-      if (isCapturablePiece) {
+      if (this.isCapturable(dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = CAPTURE
       }
     }
     return moveMatrix
   }
   rookMoves(){
-    var srcRow = this.state.ssRow
-    var srcCol = this.state.ssCol
+    var thisRook = this.state.ssPiece
+    var srcRow = thisRook.getRow()
+    var srcCol = thisRook.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 7
     moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
   bishopMoves(){
-    var srcRow = this.state.ssRow
-    var srcCol = this.state.ssCol
+    var thisBishop = this.state.ssPiece
+    var srcRow = thisBishop.getRow()
+    var srcCol = thisBishop.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 7
     moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
   queenMoves(){
-    var srcRow = this.state.ssRow
-    var srcCol = this.state.ssCol
+    var thisQueen = this.state.ssPiece
+    var srcRow = thisQueen.getRow()
+    var srcCol = thisQueen.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 7
     moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
@@ -171,22 +165,36 @@ class Game extends React.Component{
     return moveMatrix
   }
   kingMoves(){
-    var srcRow = this.state.ssRow
-    var srcCol = this.state.ssCol
+    var thisKing = this.state.ssPiece
+    var srcRow = thisKing.getRow()
+    var srcCol = thisKing.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 1
     moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
     moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
-
-    /*
-    // Castle
-    if (srcCol === 4 && ((isWhite && srcRow === 7) || (!isWhite && srcRow === 0))){
-      //Kingside
-      if (this.sqIsEmpty(srcRow, (srcCol+1))) && this.sqIsEmpty(srcRow, (srcCol+2))) {
-
+    if (!thisKing.getHasMoved()) {
+      //Kingside Castle
+      if (
+        this.sqIsEmpty(srcRow, (srcCol+1)) &&
+        this.sqIsEmpty(srcRow, (srcCol+2)))
+      {
+        let ksRook = this.getValueAtSquare(srcRow, (srcCol+3))
+        if ((ksRook !== null) && (ksRook !== '*') && (!ksRook.getHasMoved())) {
+          moveMatrix[srcRow][srcCol + 2] = CASTLE
+        }
       }
-    }*/
+      else if(
+        this.sqIsEmpty(srcRow, (srcCol-1)) &&
+        this.sqIsEmpty(srcRow, (srcCol-2)) &&
+        this.sqIsEmpty(srcRow, (srcCol-3)))
+      {
+        let qsRook = this.getValueAtSquare(srcRow, (srcCol-4))
+        if ((qsRook !== null) && (qsRook !== '*') && (!qsRook.getHasMoved())) {
+          moveMatrix[srcRow][srcCol - 2] = CASTLE
+        }
+      }
 
+    }
     return moveMatrix
   }
   columnsAndRows(srcRow, srcCol, moveMatrix, maxDist) {
@@ -462,11 +470,8 @@ class Game extends React.Component{
   moveDispatcher(i, j) {
     //Get the possible moves for this piece, and see if (i, j) is possible
     let moveMatrix = this.getMoves(this.state.ssPiece)
-    if (moveMatrix[i][j] === AVAILABLE || moveMatrix[i][j] === CAPTURE) {
-      this.moveSelectedPiece(i, j)
-    }
-    else if (moveMatrix[i][j] === ENPASSANT) {
-      this.moveEnpassant(i, j)
+    if (moveMatrix[i][j] !== '*') {
+      this.moveSelectedPiece(i, j, moveMatrix[i][j])
     }
   }
   getMoves(ssPiece) {
@@ -485,13 +490,39 @@ class Game extends React.Component{
   /**
     Given a state and a destination, update state by moving piece if poss.
   **/
-  moveSelectedPiece(i, j) {
+  moveSelectedPiece(i, j, type) {
     /* Move this.ssPiece to (i, j)*/
     var tmpBoard = this.state.board.slice()
     var ssPiece = this.state.ssPiece
     var ssRow = ssPiece.row
     var ssCol = ssPiece.col
     var ts = this.state.halfTurnCount  //Timestamp of this move
+
+    if (type === ENPASSANT) {
+      if (ssPiece.getIsWhite()) {
+        //Remove piece Row + 1g
+        tmpBoard[i + 1][j] = '*'
+      }
+      else {
+        tmpBoard[i - 1][j] = '*'
+      }
+    }
+    else if (type === CASTLE) {
+      if (j === 6) {
+        //Swap rook to i, 5
+        let tmpRook = tmpBoard[i][7]
+        tmpBoard[i][7] = '*'
+        tmpBoard[i][5] = tmpRook
+        tmpRook.movePiece(i, 5, ts)
+      }
+      else {
+        //Swap rook to i, 4
+        let tmpRook = tmpBoard[i][0]
+        tmpBoard[i][0] = '*'
+        tmpBoard[i][3] = tmpRook
+        tmpRook.movePiece(i, 3, ts)
+      }
+    }
 
     tmpBoard[ssRow][ssCol] = "*"  //Empty old space
     tmpBoard[i][j] = ssPiece  //move piece to new space
@@ -512,42 +543,6 @@ class Game extends React.Component{
     })
     this.updateHistory(newHalfCount)
   }
-
-  moveEnpassant(i, j) {
-    /* Move this.ssPiece to (i, j)*/
-    var tmpBoard = this.state.board.slice()
-    var ssPiece = this.state.ssPiece
-    var ssRow = ssPiece.row
-    var ssCol = ssPiece.col
-    var ts = this.state.halfTurnCount  //Timestamp of this move
-
-    if (ssPiece.getIsWhite()) {
-      //Remove piece Row + 1
-      tmpBoard[i + 1][j] = '*'
-    }
-    else {
-      tmpBoard[i - 1][j] = '*'
-    }
-    tmpBoard[ssRow][ssCol] = "*"  //Empty old space
-    tmpBoard[i][j] = ssPiece  //move piece to new space
-    console.log("Move piece: ", i, j, ts)
-    ssPiece.movePiece(i,j,ts)
-    //console.log(this.state.turnCount)
-    let newHalfCount = this.state.halfTurnCount + 1
-    if (!this.state.whiteToMove) {
-      let newCount = this.state.turnCount + 1
-      this.setState({
-        turnCount: newCount
-      })
-    }
-    this.setState({
-      board: tmpBoard,
-      whiteToMove: this.toggleTurnID(),
-      halfTurnCount: newHalfCount
-    })
-    this.updateHistory(newHalfCount)
-  }
-
 
   handleNewGameClick() {
     this.resetGame()
@@ -676,11 +671,18 @@ class Game extends React.Component{
     let deepCopy = this.initBoard()
     for (let i = 0; i < deepCopy.length; i++) {
       for (let j = 0; j < deepCopy.length; j++) {
-          deepCopy[i][j] = boardState[i][j]
-          //TODO deepCopy the pieces? Yea
+          deepCopy[i][j] = this.copySquare(boardState[i][j])
       }
     }
     return deepCopy
+  }
+  copySquare(sqValue) {
+    if (sqValue !== '*') {
+      return sqValue.deepCopy()
+    }
+    else {
+      return sqValue
+    }
   }
   updateHistory(newHalfCount) {
     var current = this.copyBoard(this.state.board)
@@ -741,7 +743,7 @@ class Game extends React.Component{
   ************ Render the Board ***************
   *********************************************/
   render() {
-    //console.log(this.state.history)
+    console.log(this.state.board)
     return (
       <div className="game-container">
         <div className="game-header">
