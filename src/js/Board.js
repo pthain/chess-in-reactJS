@@ -48,20 +48,31 @@ class Board extends React.Component {
   }
   renderSquare(i, j) {
     return (
-      <div onClick={()=>this.props.onClick(i, j)} className={this.getLightOrDark(i, j)}>
+      <div onClick={()=>this.props.onClick(i, j)} className={this.getSquareClassName(i, j)}>
         <div className="square-content">
           {this.renderSquareContent(this.props.board[i][j])}
         </div>
       </div>
     )
   }
-  getLightOrDark(i, j) {
+  getSquareClassName(i, j) {
+    let retCN = "board-square "
     if ((i+j)%2 === 0) {
-      return("board-square light")
+      retCN = retCN.concat("light ")
     }
     else {
-      return("board-square dark")
+      retCN = retCN.concat("dark ")
     }
+    //If a piece is selected, highlight the square
+    let selectedPiece = this.props.ssPiece
+    if  ((selectedPiece !== null) &&
+        (selectedPiece.getRow() === i ) &&
+        (selectedPiece.getCol() === j ))
+    {
+        retCN = retCN.concat("selected ")
+        console.log(retCN)
+    }
+    return retCN
   }
   /* Use State to determine if a piece is on this square */
   renderSquareContent(sqValue) {

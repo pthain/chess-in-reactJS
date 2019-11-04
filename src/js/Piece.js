@@ -10,11 +10,6 @@ class Piece {
     this.prevCol = null
     this.firstMoveTimestamp = -1
   }
-
-  /*initLocation(startRow, startCol) {
-    this.row = startRow
-    this.col = startCol
-  }*/
   getPieceId() {
     return this.pieceId
   }

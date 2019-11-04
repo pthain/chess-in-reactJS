@@ -775,7 +775,7 @@ class Game extends React.Component{
           </div>
         </div>
 
-        <Board onClick={(i, j) => this.handleSquareClick(i, j)} board={this.state.board}/>
+        <Board onClick={(i, j) => this.handleSquareClick(i, j)} ssPiece={this.state.ssPiece} board={this.state.board}/>
       </div>
     );
   }
