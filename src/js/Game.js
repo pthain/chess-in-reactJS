@@ -6,6 +6,7 @@ const CAPTURE = 'x'
 const AVAILABLE = '+'
 const ENPASSANT = 'e'
 const CASTLE = 'c'
+const PROMOTE = 'p'
 
 class Game extends React.Component{
   constructor(props) {
@@ -96,6 +97,21 @@ class Game extends React.Component{
         }
       }
     }
+    //Check for pawn promotion
+    for (let dstCol = 0; dstCol <= 7; dstCol++) {
+      //white -> row 0
+      if (isWhite) {
+        dstRow = 0
+      }
+      else {
+        dstRow = 7
+      }
+      let dstSquare = moveMatrix[dstRow][dstCol]
+      if (dstSquare === AVAILABLE || dstSquare === CAPTURE) {
+        moveMatrix[dstRow][dstCol] = PROMOTE
+      }
+      //black -> row 7
+    }
     //Look for checks i.e. update dangerBoard... Maybe not here -> revealed attack
 
     return moveMatrix
@@ -108,7 +124,6 @@ class Game extends React.Component{
 
     let dstRow = -1
     let dstCol = -1
-    let isCapturablePiece = null
 
     let moveModifiers = []
 
@@ -522,6 +537,9 @@ class Game extends React.Component{
         tmpBoard[i][3] = tmpRook
         tmpRook.movePiece(i, 3, ts)
       }
+    }
+    else if (type === PROMOTE) {
+      ssPiece.promotePiece()
     }
 
     tmpBoard[ssRow][ssCol] = "*"  //Empty old space

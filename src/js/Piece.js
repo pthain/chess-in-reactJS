@@ -60,7 +60,12 @@ class Piece {
     pieceCopy.firstMoveTimestamp = this.firstMoveTimestamp
     return pieceCopy
   }
-
+  promotePiece() {
+    if (this.getIsWhite()) {
+      this.pieceId = 'Qw'
+      this.pieceType = 'Q'
+    }
+  }
 }
 
 function parseIsWhite(pieceId) {

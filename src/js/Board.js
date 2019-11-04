@@ -2,7 +2,6 @@ import React from 'react'
 import '../css/Board.css';
 
 /* Import Pieces */
-import Piece from './Piece.js';
 import Pawn from './PieceComponents/Pawn.js';
 import Rook from './PieceComponents/Rook.js';
 import Knight from './PieceComponents/Knight.js';
@@ -72,8 +71,8 @@ class Board extends React.Component {
       return "?"
     }
     else if (sqValue !== '*') {
-      var piece = sqValue.getPieceType()
-      var isWhite = sqValue.getIsWhite()
+      piece = sqValue.getPieceType()
+      isWhite = sqValue.getIsWhite()
     }
 
     return (
