@@ -758,12 +758,23 @@ class Game extends React.Component{
   /********************************************
   ************ Render the Board ***************
   *********************************************/
+  getTurnIdClass() {
+    let retCN = "turn-id-indicator "
+    if (this.state.whiteToMove) {
+      retCN = retCN.concat("white ")
+    }
+    else {
+      retCN = retCN.concat("black ")
+    }
+    return retCN
+  }
   render() {
     console.log(this.state.board)
     return (
       <div className="game-container">
         <div className="game-header">
-          <div id="turn-id">
+          <div className={this.getTurnIdClass()}/>
+          <div className="turn-id">
             Whose turn is it: {this.getTurnID()} | Turn: {this.getTurnCount()}
           </div>
           <div>

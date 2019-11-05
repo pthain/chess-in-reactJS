@@ -15,12 +15,27 @@
   background: #b5651d
 }
 
-#turn-id {
-  background: #eee;
+.turn-id {
   border-radius: 20px;
   padding: 5px;
   margin: 5px;
+  background: #eee;
   color: #000;
+}
+
+.turn-id-indicator {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  border:#000 solid 1px;
+}
+
+.turn-id-indicator.white {
+  background: #fff;
+}
+
+.turn-id-indicator.black {
+  background: #000;
 }
 
 .board-container{
