@@ -70,7 +70,6 @@ class Board extends React.Component {
         (selectedPiece.getCol() === j ))
     {
         retCN = retCN.concat("selected ")
-        console.log(retCN)
     }
     return retCN
   }

@@ -1,6 +1,7 @@
 import React from 'react'
 import Board from './Board.js'
 import Piece from './Piece.js'
+import Move from './Move.js'
 
 const CAPTURE = 'x'
 const AVAILABLE = '+'
@@ -13,6 +14,7 @@ class Game extends React.Component{
     super(props)
     this.state = {
       board: this.setBoardNewGame(this.initBoard()),
+      legalMoves: [],
       history: [this.setBoardNewGame(this.initBoard())],
       whiteToMove: true,
       turnCount: 1,
@@ -20,11 +22,28 @@ class Game extends React.Component{
       ssPiece: null,
     }
   }
+
+  componentDidMount() {
+    this.getLegalMoves()
+    console.log("Getting first set of legal moves")
+  }
+
+  componentDidUpdate() {
+      if (this.state.legalMoves.length === 0) {
+        let ret = this.setLegalMoves()
+        /*
+        if (ret === -1) {
+          //No legal moves
+        }*/
+        console.log("We got some moves!")
+      }
+  }
+
   /********************************************
   *********** Piece Movement Rules ************
   *********************************************/
-  pawnMoves() {
-    var thisPawn = this.state.ssPiece
+  pawnMoves(thisPawn) {
+    //var thisPawn = this.state.ssPiece
     var isWhite = thisPawn.getIsWhite()
     var srcRow = thisPawn.getRow()
     var srcCol = thisPawn.getCol()
@@ -110,12 +129,10 @@ class Game extends React.Component{
         moveMatrix[dstRow][dstCol] = PROMOTE
       }
     }
-    //Look for checks i.e. update dangerBoard... Maybe not here -> revealed attack
-
     return moveMatrix
   }
-  knightMoves(){
-    var thisKnight = this.state.ssPiece
+  knightMoves(thisKnight){
+    //var thisKnight = this.state.ssPiece
     var srcRow = thisKnight.getRow()
     var srcCol = thisKnight.getCol()
     var moveMatrix = this.initBoard()
@@ -149,8 +166,8 @@ class Game extends React.Component{
     }
     return moveMatrix
   }
-  rookMoves(){
-    var thisRook = this.state.ssPiece
+  rookMoves(thisRook){
+    //var thisRook = this.state.ssPiece
     var srcRow = thisRook.getRow()
     var srcCol = thisRook.getCol()
     var moveMatrix = this.initBoard()
@@ -158,8 +175,8 @@ class Game extends React.Component{
     moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
-  bishopMoves(){
-    var thisBishop = this.state.ssPiece
+  bishopMoves(thisBishop){
+    //var thisBishop = this.state.ssPiece
     var srcRow = thisBishop.getRow()
     var srcCol = thisBishop.getCol()
     var moveMatrix = this.initBoard()
@@ -167,8 +184,8 @@ class Game extends React.Component{
     moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
-  queenMoves(){
-    var thisQueen = this.state.ssPiece
+  queenMoves(thisQueen){
+    //var thisQueen = this.state.ssPiece
     var srcRow = thisQueen.getRow()
     var srcCol = thisQueen.getCol()
     var moveMatrix = this.initBoard()
@@ -177,8 +194,8 @@ class Game extends React.Component{
     moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
-  kingMoves(){
-    var thisKing = this.state.ssPiece
+  kingMoves(thisKing){
+    //var thisKing = this.state.ssPiece
     var srcRow = thisKing.getRow()
     var srcCol = thisKing.getCol()
     var moveMatrix = this.initBoard()
@@ -347,6 +364,64 @@ class Game extends React.Component{
     return moveMatrix
 
   }
+  clearLegalMoves() {
+    this.setState ({
+      legalMoves: []
+    })
+  }
+  setLegalMoves() {
+    var lglMoves = this.state.legalMoves
+    //A move is a piece, dstRow, dstCol
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
+        //If this space is a piece, getItsmoves
+        if (!this.sqIsEmpty(i, j)) {
+          let pieceToMove = this.getValueAtSquare(i, j)
+          if (pieceToMove.getIsWhite() === this.state.whiteToMove) {
+            //console.log("Get moves for ", pieceToMove.getPieceId()," at", i, j)
+            //lglMoves.push(new Move(pieceToMove, -1, -1))
+            let moveMatrix = this.getMoves(pieceToMove)
+            let movesForThisPiece = this.parseMovesFromMatrix(pieceToMove, moveMatrix)
+            //lglMoves.concat(movesForThisPiece)
+            if (movesForThisPiece.length !== 0) {
+              Array.prototype.push.apply(lglMoves, movesForThisPiece)
+            }
+          }
+        }
+        //enumerate each move from the matrix and add to the list
+      }
+    }
+    /*
+    for (let i = 0; i < lglMoves.length; i++) {
+      let m = lglMoves[i]
+      console.log(m.getPiece().getPieceId(), m.getDstRow(), m.getDstCol(), m.getType())
+    }
+    */
+    console.log(lglMoves)
+    if (lglMoves.length === 0) {
+      console.log("You have no legal moves!")
+      return -1
+    }
+    else {
+      this.setState({
+        legalMoves: lglMoves
+      })
+      return 0
+    }
+  }
+  parseMovesFromMatrix(piece, moveMatrix) {
+    var lglMovesPartial = []
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
+        //console.log(moveMatrix)
+        let type = moveMatrix[i][j]
+        if (type !== '*') {
+          lglMovesPartial.push(new Move(piece, i, j, type))
+        }
+      }
+    }
+    return lglMovesPartial
+  }
 
   /********************************************
   ******* Piece & Movement Helpers ************
@@ -485,17 +560,19 @@ class Game extends React.Component{
     let moveMatrix = this.getMoves(this.state.ssPiece)
     if (moveMatrix[i][j] !== '*') {
       this.moveSelectedPiece(i, j, moveMatrix[i][j])
+      this.clearLegalMoves()
     }
+
   }
   getMoves(ssPiece) {
     let moveMatrix = []
     let pieceType = ssPiece.getPieceType()
-    if (pieceType === 'P') {moveMatrix = this.pawnMoves()}
-    else if (pieceType === 'R') {moveMatrix = this.rookMoves()}
-    else if (pieceType === 'N') {moveMatrix = this.knightMoves()}
-    else if (pieceType === 'B') {moveMatrix = this.bishopMoves()}
-    else if (pieceType === 'Q') {moveMatrix = this.queenMoves()}
-    else if (pieceType === 'K') {moveMatrix = this.kingMoves()}
+    if (pieceType === 'P') {moveMatrix = this.pawnMoves(ssPiece)}
+    else if (pieceType === 'R') {moveMatrix = this.rookMoves(ssPiece)}
+    else if (pieceType === 'N') {moveMatrix = this.knightMoves(ssPiece)}
+    else if (pieceType === 'B') {moveMatrix = this.bishopMoves(ssPiece)}
+    else if (pieceType === 'Q') {moveMatrix = this.queenMoves(ssPiece)}
+    else if (pieceType === 'K') {moveMatrix = this.kingMoves(ssPiece)}
     //else no possible moves
     //console.log(moveMatrix)
     return moveMatrix
@@ -582,6 +659,35 @@ class Game extends React.Component{
   /**********************************
    ********* Meta Game Info *********
    **********************************/
+  findCheck() {
+    /*
+      1. You can never put your own king in check
+      2. You can never end a turn with your own king in check
+      3. You can never select a piece that has no moves
+
+
+      Ideas
+
+      RADICAL:
+        a) Calculate all legal moves at the start of every turn
+        b) When handling a click, if the selected piece makes a legal move, execute it
+        c) if no legal moves, and king is in check, checkmate
+        d) When Calculating legal moves list, only accepts moves that do not result in a king in check
+
+      OUT OF MOVES -- one team cannot make any legal plays
+      CHECK -- one team's king is in danger of being attacked by another player
+
+      After you attempt to make a move, but before you excute, ask:
+        Is my king in CHECK? If yes, CANCEL the move, deselect, do nothing else
+      After a successful move, ask:
+        Is my opponent OUT OF MOVES?
+          if OUT OF MOVES and king is in *CHECK*, then *CHECKMATE*
+          else *STALEMATE*
+
+      Questions:
+        How can you determine if there are no possible moves? (stalemate, king for checkmate)
+    */
+  }
   toggleTurnID() {
     if(this.state.whiteToMove) {
       return false
@@ -758,7 +864,7 @@ class Game extends React.Component{
   /********************************************
   ************ Render the Board ***************
   *********************************************/
-  getTurnIdClass() {
+  getTurnIndicatorClass() {
     let retCN = "turn-id-indicator "
     if (this.state.whiteToMove) {
       retCN = retCN.concat("white ")
@@ -769,11 +875,11 @@ class Game extends React.Component{
     return retCN
   }
   render() {
-    console.log(this.state.board)
+    //console.log(this.state.board)
     return (
       <div className="game-container">
         <div className="game-header">
-          <div className={this.getTurnIdClass()}/>
+          <div className={this.getTurnIndicatorClass()}/>
           <div className="turn-id">
             Whose turn is it: {this.getTurnID()} | Turn: {this.getTurnCount()}
           </div>
@@ -785,7 +891,6 @@ class Game extends React.Component{
             <button id="new-game-btn" onClick={() => this.handleNewGameClick()} className="new-game-button">New Game</button>
           </div>
         </div>
-
         <Board onClick={(i, j) => this.handleSquareClick(i, j)} ssPiece={this.state.ssPiece} board={this.state.board}/>
       </div>
     );
