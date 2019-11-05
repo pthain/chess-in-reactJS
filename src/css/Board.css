@@ -9,13 +9,18 @@
   display: grid;
   grid-auto-flow: column;
   justify-content: center;
+  align-items: center;
   grid-gap: 0 1em;
   border: 3px #05050d solid;
   background: #b5651d
 }
 
 #turn-id {
-  color: #ff0
+  background: #eee;
+  border-radius: 20px;
+  padding: 5px;
+  margin: 5px;
+  color: #000;
 }
 
 .board-container{
@@ -82,11 +87,10 @@
 .dark {
   background: #666;
 }
-
+/* Yellow #f6f600 blended with the backgrounds */
 .light.selected {
   background: #f2f277;
 }
 .dark.selected {
   background: #cfcf1c;
-  /*background: #bb3;*/
 }
