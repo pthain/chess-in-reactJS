@@ -49,10 +49,9 @@ class Piece {
     this.prevCol = this.col
     this.row = dstRow
     this.col = dstCol
-/*    if (this.pieceType === 'K') {
+    /*if (this.pieceType === 'K') {
       this.updateKingThreats()
-    }
-    */
+    }*/
   }
   deepCopy() {
     var pieceCopy = new Piece(this.pieceId, this.row, this.col)
@@ -72,6 +71,7 @@ class Piece {
       this.pieceType = 'Q'
     }
   }
+
   /*
   updateKingThreats() {
     //pawn

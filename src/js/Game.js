@@ -31,18 +31,20 @@ class Game extends React.Component{
   componentDidUpdate() {
       if (this.state.legalMoves.length === 0) {
         let ret = this.setLegalMoves()
-        /*
+
         if (ret === -1) {
-          //No legal moves
-        }*/
+          console.log("You are out of moves!")
+        }
+        else {
         console.log("We got some moves!")
+        }
       }
   }
 
   /********************************************
   *********** Piece Movement Rules ************
   *********************************************/
-  pawnMoves(thisPawn) {
+  pawnMoves(board, thisPawn, isWhiteToMove, ts) {
     //var thisPawn = this.state.ssPiece
     var isWhite = thisPawn.getIsWhite()
     var srcRow = thisPawn.getRow()
@@ -58,11 +60,11 @@ class Game extends React.Component{
 
     //Mark space one ahead
     dstRow = srcRow + dir
-    if (this.sqIsEmpty(dstRow, srcCol)) {
+    if (this.sqIsEmpty(board, dstRow, srcCol)) {
       moveMatrix[dstRow][srcCol] = AVAILABLE
       //Mark a move-two if possible
       dstRow = dstRow + dir
-      if ((!(thisPawn.getHasMoved())) && this.sqIsEmpty(dstRow, srcCol)) {
+      if ((!(thisPawn.getHasMoved())) && this.sqIsEmpty(board, dstRow, srcCol)) {
         moveMatrix[dstRow][srcCol] = AVAILABLE
       }
     }
@@ -70,13 +72,13 @@ class Game extends React.Component{
     dstRow = srcRow + dir
     dstCol = srcCol - 1 //Left
     if (dstCol >= 0) {
-      if (!this.sqIsEmpty(dstRow, dstCol) && this.isCapturable(dstRow, dstCol)) {
+      if (!this.sqIsEmpty(board, dstRow, dstCol) && this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
         moveMatrix[dstRow][dstCol] = CAPTURE
       }
     }
     dstCol = srcCol + 1 //Right
     if (dstCol <= 7) {
-      if (!this.sqIsEmpty(dstRow, dstCol) && this.isCapturable(dstRow, dstCol)) {
+      if (!this.sqIsEmpty(board, dstRow, dstCol) && this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
         moveMatrix[dstRow][dstCol] = CAPTURE
       }
     }
@@ -84,14 +86,14 @@ class Game extends React.Component{
     //Left
     let leftCol = srcCol - 1
     if (leftCol >= 0) {
-      let leftNeighbor = this.getValueAtSquare(srcRow, leftCol)
+      let leftNeighbor = this.getValueAtSquare(board, srcRow, leftCol)
       //If space to the left has an enemy pawn
-      if ((leftNeighbor !== '*') && (leftNeighbor.getPieceType() === 'P') && (this.state.whiteToMove !== leftNeighbor.getIsWhite())) {
+      if ((leftNeighbor !== '*') && (leftNeighbor.getPieceType() === 'P') && (isWhiteToMove !== leftNeighbor.getIsWhite())) {
         //If enemy moved two spaces forward on its last move and it was LAST turn
         if (
           leftNeighbor.getCol() === leftNeighbor.getPrevCol() &&
           leftNeighbor.getRow() === (leftNeighbor.getPrevRow() + (2 * -dir)) &&
-          leftNeighbor.getFirstMoveTS() === (this.state.halfTurnCount - 1)
+          leftNeighbor.getFirstMoveTS() === (ts - 1)
         ) {
           dstRow = srcRow + dir
           dstCol = leftCol
@@ -102,13 +104,13 @@ class Game extends React.Component{
     //Right
     let rightCol = srcCol + 1
     if (rightCol <= 7) {
-      let rightNeighbor = this.getValueAtSquare(srcRow, rightCol)
-      if ((rightNeighbor !== '*') && (rightNeighbor.getPieceType() === 'P') && (this.state.whiteToMove !== rightNeighbor.getIsWhite())) {
+      let rightNeighbor = this.getValueAtSquare(board, srcRow, rightCol)
+      if ((rightNeighbor !== '*') && (rightNeighbor.getPieceType() === 'P') && (isWhiteToMove !== rightNeighbor.getIsWhite())) {
         //If enemy moved two spaces forward on its last move and it was LAST turn
         if (
           rightNeighbor.getCol() === rightNeighbor.getPrevCol() &&
           rightNeighbor.getRow() === (rightNeighbor.getPrevRow() + (2 * -dir)) &&
-          rightNeighbor.getFirstMoveTS() === (this.state.halfTurnCount - 1)
+          rightNeighbor.getFirstMoveTS() === (ts - 1)
         ) {
           dstRow = srcRow + dir
           dstCol = rightCol
@@ -131,7 +133,7 @@ class Game extends React.Component{
     }
     return moveMatrix
   }
-  knightMoves(thisKnight){
+  knightMoves(board, thisKnight, isWhiteToMove){
     //var thisKnight = this.state.ssPiece
     var srcRow = thisKnight.getRow()
     var srcCol = thisKnight.getCol()
@@ -157,68 +159,68 @@ class Game extends React.Component{
       if (dstRow < 0 || dstCol < 0 || dstRow > 7 || dstCol > 7) {
         continue
       }
-      else if (this.sqIsEmpty(dstRow, dstCol)) {
+      else if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
-      if (this.isCapturable(dstRow, dstCol)) {
+      if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
         moveMatrix[dstRow][dstCol] = CAPTURE
       }
     }
     return moveMatrix
   }
-  rookMoves(thisRook){
+  rookMoves(board, thisRook, isWhiteToMove){
     //var thisRook = this.state.ssPiece
     var srcRow = thisRook.getRow()
     var srcCol = thisRook.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 7
-    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.columnsAndRows(board, srcRow, srcCol, moveMatrix, maxDist, isWhiteToMove)
     return moveMatrix
   }
-  bishopMoves(thisBishop){
+  bishopMoves(board, thisBishop, isWhiteToMove){
     //var thisBishop = this.state.ssPiece
     var srcRow = thisBishop.getRow()
     var srcCol = thisBishop.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 7
-    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
-  queenMoves(thisQueen){
+  queenMoves(board, thisQueen, isWhiteToMove){
     //var thisQueen = this.state.ssPiece
     var srcRow = thisQueen.getRow()
     var srcCol = thisQueen.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 7
-    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
-    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.columnsAndRows(board, srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist)
     return moveMatrix
   }
-  kingMoves(thisKing){
+  kingMoves(board, thisKing, isWhiteToMove){
     //var thisKing = this.state.ssPiece
     var srcRow = thisKing.getRow()
     var srcCol = thisKing.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 1
-    moveMatrix = this.columnsAndRows(srcRow, srcCol, moveMatrix, maxDist)
-    moveMatrix = this.diagonals(srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.columnsAndRows(board, srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist)
     if (!thisKing.getHasMoved()) {
       //Kingside Castle
       if (
-        this.sqIsEmpty(srcRow, (srcCol+1)) &&
-        this.sqIsEmpty(srcRow, (srcCol+2)))
+        this.sqIsEmpty(board, srcRow, (srcCol+1)) &&
+        this.sqIsEmpty(board, srcRow, (srcCol+2)))
       {
-        let ksRook = this.getValueAtSquare(srcRow, (srcCol+3))
+        let ksRook = this.getValueAtSquare(board, srcRow, (srcCol+3))
         if ((ksRook !== null) && (ksRook !== '*') && (!ksRook.getHasMoved())) {
           moveMatrix[srcRow][srcCol + 2] = CASTLE
         }
       }
       else if(
-        this.sqIsEmpty(srcRow, (srcCol-1)) &&
-        this.sqIsEmpty(srcRow, (srcCol-2)) &&
-        this.sqIsEmpty(srcRow, (srcCol-3)))
+        this.sqIsEmpty(board, srcRow, (srcCol-1)) &&
+        this.sqIsEmpty(board, srcRow, (srcCol-2)) &&
+        this.sqIsEmpty(board, srcRow, (srcCol-3)))
       {
-        let qsRook = this.getValueAtSquare(srcRow, (srcCol-4))
+        let qsRook = this.getValueAtSquare(board, srcRow, (srcCol-4))
         if ((qsRook !== null) && (qsRook !== '*') && (!qsRook.getHasMoved())) {
           moveMatrix[srcRow][srcCol - 2] = CASTLE
         }
@@ -227,19 +229,19 @@ class Game extends React.Component{
     }
     return moveMatrix
   }
-  columnsAndRows(srcRow, srcCol, moveMatrix, maxDist) {
+  columnsAndRows(board, srcRow, srcCol, moveMatrix, maxDist, isWhiteToMove) {
     let dstRow = -1
     let dstCol = -1
     //North
     dstCol = srcCol
     for (let i = 1; (srcRow - i >= 0) && (i <= maxDist); i++) {
       dstRow = (srcRow - i)
-      if (this.sqIsEmpty(dstRow, dstCol)) {
+      if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
       //If not empty, then there is a piece.
       else {
-        if (this.isCapturable(dstRow, dstCol)) {
+        if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
           moveMatrix[dstRow][dstCol] = CAPTURE
         }
         //Stop: rook can't move past a piece
@@ -249,11 +251,11 @@ class Game extends React.Component{
     //South
     for (let i = 1; (srcRow + i <= 7) && (i <= maxDist); i++) {
       dstRow = srcRow + i
-      if (this.sqIsEmpty(dstRow, dstCol)) {
+      if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
       else {
-        if (this.isCapturable(dstRow, dstCol)) {
+        if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
           moveMatrix[dstRow][dstCol] = CAPTURE
         }
         //Stop: rook can't move past a piece
@@ -264,12 +266,12 @@ class Game extends React.Component{
     dstRow = srcRow
     for (let i = 1; (srcCol - i >= 0) && (i <= maxDist); i++) {
       dstCol = srcCol - i
-      if (this.sqIsEmpty(dstRow, dstCol)) {
+      if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
       //If not empty, then there is a piece.
       else {
-        if (this.isCapturable(dstRow, dstCol)) {
+        if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
           moveMatrix[dstRow][dstCol] = CAPTURE
         }
         //Stop: rook can't move past a piece
@@ -279,12 +281,12 @@ class Game extends React.Component{
     //East
     for (let i = 1; (srcCol + i <= 7) && (i <= maxDist); i++) {
       dstCol = srcCol + i
-      if (this.sqIsEmpty(dstRow, dstCol)) {
+      if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
       //If not empty, then there is a piece.
       else {
-        if (this.isCapturable(dstRow, dstCol)) {
+        if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
           moveMatrix[dstRow][dstCol] = CAPTURE
         }
         //Stop: rook can't move past a piece
@@ -293,7 +295,7 @@ class Game extends React.Component{
     }
     return moveMatrix
   }
-  diagonals(srcRow, srcCol, moveMatrix, maxDist) {
+  diagonals(board, srcRow, srcCol, moveMatrix, maxDist, isWhiteToMove) {
     let dstRow = -1
     let dstCol = -1
 
@@ -301,12 +303,12 @@ class Game extends React.Component{
     for (let i = 1; (((srcCol + i) <= 7 || (srcRow - i) >= 0) && i <= maxDist); i++) {
       dstRow = srcRow - i
       dstCol = srcCol + i
-      if (this.sqIsEmpty(dstRow, dstCol)) {
+      if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
       //If not empty, then there is a piece.
       else {
-        if (this.isCapturable(dstRow, dstCol)) {
+        if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
           moveMatrix[dstRow][dstCol] = CAPTURE
         }
         //Stop: bishop can't move past a piece
@@ -317,12 +319,12 @@ class Game extends React.Component{
     for (let i = 1; (((srcCol - i) >= 0 || (srcRow - i) >= 0) && i <= maxDist); i++) {
       dstRow = srcRow - i
       dstCol = srcCol - i
-      if (this.sqIsEmpty(dstRow, dstCol)) {
+      if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
       //If not empty, then there is a piece.
       else {
-        if (this.isCapturable(dstRow, dstCol)) {
+        if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
           moveMatrix[dstRow][dstCol] = CAPTURE
         }
         //Stop: bishop can't move past a piece
@@ -333,12 +335,12 @@ class Game extends React.Component{
     for (let i = 1; (((srcCol - i) >= 0 || (srcRow + i) <= 7) && i <= maxDist); i++) {
       dstRow = srcRow + i
       dstCol = srcCol - i
-      if (this.sqIsEmpty(dstRow, dstCol)) {
+      if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
       //If not empty, then there is a piece.
       else {
-        if (this.isCapturable(dstRow, dstCol)) {
+        if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
           moveMatrix[dstRow][dstCol] = CAPTURE
         }
         //Stop: bishop can't move past a piece
@@ -349,12 +351,12 @@ class Game extends React.Component{
     for (let i = 1; (((srcCol + i) <= 7 || (srcRow + i) <= 7) && i <= maxDist); i++) {
       dstRow = srcRow + i
       dstCol = srcCol + i
-      if (this.sqIsEmpty(dstRow, dstCol)) {
+      if (this.sqIsEmpty(board, dstRow, dstCol)) {
         moveMatrix[dstRow][dstCol] = AVAILABLE
       }
       //If not empty, then there is a piece.
       else {
-        if (this.isCapturable(dstRow, dstCol)) {
+        if (this.isCapturable(board, dstRow, dstCol, isWhiteToMove)) {
           moveMatrix[dstRow][dstCol] = CAPTURE
         }
         //Stop: bishop can't move past a piece
@@ -376,12 +378,12 @@ class Game extends React.Component{
     for (let i = 0; i <= 7; i++) {
       for (let j = 0; j <= 7; j++) {
         //If this space is a piece, getItsmoves
-        if (!this.sqIsEmpty(i, j)) {
-          let pieceToMove = this.getValueAtSquare(i, j)
+        if (!this.sqIsEmpty(this.state.board, i, j)) {
+          let pieceToMove = this.getValueAtSquare(this.state.board, i, j)
           if (pieceToMove.getIsWhite() === this.state.whiteToMove) {
             //console.log("Get moves for ", pieceToMove.getPieceId()," at", i, j)
             //lglMoves.push(new Move(pieceToMove, -1, -1))
-            let moveMatrix = this.getMoves(pieceToMove)
+            let moveMatrix = this.getMoves(this.state.board, pieceToMove, this.whiteToMove , this.state.halfTurnCount)
             let movesForThisPiece = this.parseMovesFromMatrix(pieceToMove, moveMatrix)
             //lglMoves.concat(movesForThisPiece)
             if (movesForThisPiece.length !== 0) {
@@ -391,7 +393,7 @@ class Game extends React.Component{
         }
       }
     }
-    lglMoves = this.pruneMovesThatCauseCheck(lglMoves)
+    //lglMoves = this.pruneMovesThatCauseCheck(lglMoves)
     /*
     for (let i = 0; i < lglMoves.length; i++) {
       let m = lglMoves[i]
@@ -433,7 +435,8 @@ class Game extends React.Component{
       //What has to happen to make the move
       var tmpBoard = this.movePieceOnBoard(initialBoard, m.getPiece().deepCopy(), m.getDstRow(), m.getDstCol(), m.getType(), this.state.halfTurnCount)
       //tmpBoard[m.getDstRow()][m.getDstCol()] = m.getPiece()
-      if (this.isKingInCheck(tmpBoard)) {
+      var king = this.getKing(tmpBoard)
+      if (this.isKingInCheck(tmpBoard, king)) {
         //RemoveItem
         moves.splice(i, 1)
       }
@@ -441,7 +444,15 @@ class Game extends React.Component{
     return moves
   }
 
-  isKingInCheck(board) {
+  isKingInCheck(board, king) {
+    //Try to move every other piece of the enemy
+    var enemyColor = !(this.state.whiteToMove)
+
+    //If they can capture the king, it is in check
+    return false
+  }
+
+  getKing(board) {
     //Board is a slice of the original with a hypothetical move
     //Get King
     var isWhiteToMove = this.state.whiteToMove
@@ -461,6 +472,8 @@ class Game extends React.Component{
       console.log("King can't be found!")
       return false
     }
+    return king
+  }
     /*var threats = king.pThreats
     for (let i = 0; i < threats.length; i++) {
       let tRow = threats[i][0]
@@ -471,8 +484,16 @@ class Game extends React.Component{
         return true
       }
     }*/
-    return false
-    }
+    /*var threats = k.rThreats
+    for (let i = 0; i < threats.length; i++) {
+      let tRow = threats[i][0]
+      let tCol = threats[i][1]
+      let tSq = board[tRow][tCol]
+        if (tSq !== '*' && (tSq.getPieceType() === 'P') && (tSq.getIsWhite() !== isWhiteToMove)) {
+        console.log("A pawn has put the king in check!!!", tSq, king)
+        return true
+      }
+    }*/
     /*
     let rowColCheckMatrix = this.columnsAndRows(kRow, kCol, initMatrix, maxDist)
     let diagCheckMatrix = this.diagonals(kRow, kCol, initMatrix, maxDist)
@@ -498,30 +519,30 @@ class Game extends React.Component{
   /********************************************
   ******* Piece & Movement Helpers ************
   *********************************************/
-  isCapturable(dstRow, dstCol) {
-    let whiteToMove = this.state.whiteToMove
-    if(this.sqIsEmpty(dstRow, dstCol) || !this.sqInBounds(dstRow, dstCol)) {
+  isCapturable(board, dstRow, dstCol, isWhiteToMove) {
+    //let whiteToMove = this.state.whiteToMove
+    if(this.sqIsEmpty(board, dstRow, dstCol) || !this.sqInBounds(dstRow, dstCol)) {
       return false
     }
-    let victim = this.getValueAtSquare(dstRow, dstCol)
-    if ((whiteToMove && !(victim.getIsWhite())) || (!whiteToMove && victim.getIsWhite())) {
+    let victim = this.getValueAtSquare(board, dstRow, dstCol)
+    if ((isWhiteToMove && !(victim.getIsWhite())) || (!isWhiteToMove && victim.getIsWhite())) {
       return true
     }
     else {
       return false
     }
   }
-  sqIsEmpty(i, j) {
+  sqIsEmpty(board, i, j) {
     if (!this.sqInBounds(i, j)) {
       return null
     }
-    return (this.getValueAtSquare(i,j) === '*')
+    return (this.getValueAtSquare(board,i,j) === '*')
   }
-  getValueAtSquare(i, j) {
+  getValueAtSquare(board, i, j) {
     if (!this.sqInBounds(i, j)) {
       return null
     }
-    return this.state.board[i][j]
+    return board[i][j]
   }
   sqInBounds(i, j) {
     return !(i < 0 || j < 0 || i > 7 || j > 7)
@@ -567,16 +588,23 @@ class Game extends React.Component{
   **/
   handleSquareClick(i, j) {
     //Get piece @ i, j
-    let sqValue = this.getValueAtSquare(i, j)
+    let sqValue = this.getValueAtSquare(this.state.board, i, j)
+    var isWhiteToMove = this.state.whiteToMove
     if (sqValue === null) {
       console.log("clicked sq is null (should not occur)")
     }
     //If sqValue is a piece and its that color's move, select it
-    if(sqValue !== '*' && sqValue.getIsWhite() === this.state.whiteToMove) {
+    if(sqValue !== '*' && sqValue.getIsWhite() === isWhiteToMove) {
       this.selectSquare(sqValue)
     }
     else if (this.state.ssPiece !== null) {
-      this.moveDispatcher(i, j)
+      let srcPiece = this.state.ssPiece
+      let ts = this.state.halfTurnCount
+      let updatedBoard = this.moveDispatcher(this.state.board, i, j, srcPiece, isWhiteToMove, ts)
+      if (updatedBoard !== null) {
+        this.setBoardState(updatedBoard) //The move to i, j was valid, reflect on board
+        this.clearLegalMoves()
+      }
       this.deselectSquare()
     }
   }
@@ -627,27 +655,24 @@ class Game extends React.Component{
     })
   }
   */
-  moveDispatcher(i, j) {
+  moveDispatcher(board, i, j, srcPiece, isWhiteToMove, ts) {
     //Get the possible moves for this piece, and see if (i, j) is possible
-    let srcPiece = this.state.ssPiece
-    let ts = this.state.halfTurnCount
-    let moveMatrix = this.getMoves(srcPiece)
+    let moveMatrix = this.getMoves(board, srcPiece, isWhiteToMove, ts)
     if (moveMatrix[i][j] !== '*') {
-      var updatedBoard = this.movePieceOnBoard(this.state.board, srcPiece, i, j, moveMatrix[i][j], ts)
-      this.setBoardState(updatedBoard)
-      this.clearLegalMoves()
+      var updatedBoard = this.movePieceOnBoard(board, srcPiece, i, j, moveMatrix[i][j], ts)
+      return updatedBoard
     }
-
+    return null
   }
-  getMoves(ssPiece) {
+  getMoves(board, ssPiece, isWhiteToMove, ts) {
     let moveMatrix = []
     let pieceType = ssPiece.getPieceType()
-    if (pieceType === 'P') {moveMatrix = this.pawnMoves(ssPiece)}
-    else if (pieceType === 'R') {moveMatrix = this.rookMoves(ssPiece)}
-    else if (pieceType === 'N') {moveMatrix = this.knightMoves(ssPiece)}
-    else if (pieceType === 'B') {moveMatrix = this.bishopMoves(ssPiece)}
-    else if (pieceType === 'Q') {moveMatrix = this.queenMoves(ssPiece)}
-    else if (pieceType === 'K') {moveMatrix = this.kingMoves(ssPiece)}
+    if (pieceType === 'P') {moveMatrix = this.pawnMoves(board, ssPiece, isWhiteToMove, ts)}
+    else if (pieceType === 'R') {moveMatrix = this.rookMoves(board, ssPiece, isWhiteToMove)}
+    else if (pieceType === 'N') {moveMatrix = this.knightMoves(board, ssPiece, isWhiteToMove)}
+    else if (pieceType === 'B') {moveMatrix = this.bishopMoves(board, ssPiece, isWhiteToMove)}
+    else if (pieceType === 'Q') {moveMatrix = this.queenMoves(board, ssPiece, isWhiteToMove)}
+    else if (pieceType === 'K') {moveMatrix = this.kingMoves(board, ssPiece, isWhiteToMove)}
     //else no possible moves
     //console.log(moveMatrix)
     return moveMatrix
@@ -692,7 +717,7 @@ class Game extends React.Component{
     }
     tmpBoard[ssRow][ssCol] = "*"  //Empty old space
     tmpBoard[i][j] = ssPiece  //move piece to new space
-    console.log("Move piece: ", ssPiece.getPieceType(), i, j, ts)
+    //console.log("Move piece: ", ssPiece.getPieceType(), i, j, ts)
     ssPiece.movePiece(i,j,ts)
     return tmpBoard
   }
