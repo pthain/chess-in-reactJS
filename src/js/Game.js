@@ -366,157 +366,6 @@ class Game extends React.Component{
     return moveMatrix
 
   }
-  clearLegalMoves() {
-    this.setState ({
-      legalMoves: []
-    })
-  }
-  setLegalMoves() {
-    var lglMoves = this.state.legalMoves
-  //  var isWhiteToMove = this.state.whiteToMove
-  //  console.log(isWhiteToMove)
-    //A move is a piece, dstRow, dstCol
-    //for every space
-    for (let i = 0; i <= 7; i++) {
-      for (let j = 0; j <= 7; j++) {
-        //If this space is a piece, getItsmoves
-        if (!this.sqIsEmpty(this.state.board, i, j)) {
-          let pieceToMove = this.getValueAtSquare(this.state.board, i, j)
-          if (pieceToMove.getIsWhite() === this.state.whiteToMove) {
-            //console.log("Get moves for ", pieceToMove.getPieceId()," at", i, j)
-            //lglMoves.push(new Move(pieceToMove, -1, -1))
-            let moveMatrix = this.getMoves(this.state.board, pieceToMove, this.state.whiteToMove , this.state.halfTurnCount)
-            let movesForThisPiece = this.parseMovesFromMatrix(pieceToMove, moveMatrix)
-            //lglMoves.concat(movesForThisPiece)
-            if (movesForThisPiece.length !== 0) {
-              Array.prototype.push.apply(lglMoves, movesForThisPiece)
-            }
-          }
-        }
-      }
-    }
-    //lglMoves = this.pruneMovesThatCauseCheck(lglMoves)
-    /*
-    for (let i = 0; i < lglMoves.length; i++) {
-      let m = lglMoves[i]
-      console.log(m.getPiece().getPieceId(), m.getDstRow(), m.getDstCol(), m.getType())
-    }
-    */
-    console.log(lglMoves)
-    if (lglMoves.length === 0) {
-      console.log("You have no legal moves!")
-      return -1
-    }
-    else {
-      this.setState({
-        legalMoves: lglMoves
-      })
-      return 0
-    }
-  }
-  parseMovesFromMatrix(piece, moveMatrix) {
-    var lglMovesPartial = []
-    for (let i = 0; i <= 7; i++) {
-      for (let j = 0; j <= 7; j++) {
-        //console.log(moveMatrix)
-        let type = moveMatrix[i][j]
-        if (type !== '*') {
-          lglMovesPartial.push(new Move(piece, i, j, type))
-        }
-      }
-    }
-    return lglMovesPartial
-  }
-  pruneMovesThatCauseCheck(moves) {
-    const initialBoard = this.state.board
-    var originalLength = moves.length
-    for (let i = originalLength -1; i >= 0; i--) {
-      //var tmpBoard = this.copyBoard(initialBoard)
-      let m = moves[i]
-      //Make the move
-      //What has to happen to make the move
-      var tmpBoard = this.movePieceOnBoard(initialBoard, m.getPiece().deepCopy(), m.getDstRow(), m.getDstCol(), m.getType(), this.state.halfTurnCount)
-      //tmpBoard[m.getDstRow()][m.getDstCol()] = m.getPiece()
-      var king = this.getKing(tmpBoard)
-      if (this.isKingInCheck(tmpBoard, king)) {
-        //RemoveItem
-        moves.splice(i, 1)
-      }
-    }
-    return moves
-  }
-
-  isKingInCheck(board, king) {
-    //Try to move every other piece of the enemy
-    var enemyColor = !(this.state.whiteToMove)
-
-    //If they can capture the king, it is in check
-    return false
-  }
-
-  getKing(board) {
-    //Board is a slice of the original with a hypothetical move
-    //Get King
-    var isWhiteToMove = this.state.whiteToMove
-    var king = null
-    for (let i = 0; i <= 7; i++) {
-      for (let j = 0; j <= 7; j++) {
-        //console.log(board[i][j])
-        if ((board[i][j] !== '*') &&
-            (board[i][j].getPieceType() === 'K') &&
-            (board[i][j].getIsWhite() === this.state.whiteToMove))
-        {
-          king = board[i][j]
-        }
-      }
-    }
-    if (king === null) {
-      console.log("King can't be found!")
-      return false
-    }
-    return king
-  }
-    /*var threats = king.pThreats
-    for (let i = 0; i < threats.length; i++) {
-      let tRow = threats[i][0]
-      let tCol = threats[i][1]
-      let tSq = board[tRow][tCol]
-        if (tSq !== '*' && (tSq.getPieceType() === 'P') && (tSq.getIsWhite() !== isWhiteToMove)) {
-        console.log("A pawn has put the king in check!!!", tSq, king)
-        return true
-      }
-    }*/
-    /*var threats = k.rThreats
-    for (let i = 0; i < threats.length; i++) {
-      let tRow = threats[i][0]
-      let tCol = threats[i][1]
-      let tSq = board[tRow][tCol]
-        if (tSq !== '*' && (tSq.getPieceType() === 'P') && (tSq.getIsWhite() !== isWhiteToMove)) {
-        console.log("A pawn has put the king in check!!!", tSq, king)
-        return true
-      }
-    }*/
-    /*
-    let rowColCheckMatrix = this.columnsAndRows(kRow, kCol, initMatrix, maxDist)
-    let diagCheckMatrix = this.diagonals(kRow, kCol, initMatrix, maxDist)
-    let knightCheckMatrix = this.knightMoves(king)
-    //If it's white's turn, the king is white, threat needs to be black
-    for (let i = 0; i <= 7; i++) {
-      for (let j = 0; j <= 7; j++) {
-        let threatSq = board[i][j]
-        if (knightCheckMatrix[i][j] === 'x') {
-          if(threatSq.getPieceType() === 'N') {
-            console.log(threatSq, knightCheckMatrix, "Your king is in check!")
-            return true
-          }
-        }
-      }
-    }*/
-    /*
-    */
-    //Check rows/cols
-    //Check diagonals
-    //Check for knight
 
   /********************************************
   ******* Piece & Movement Helpers ************
@@ -763,6 +612,130 @@ class Game extends React.Component{
   /**********************************
    ********* Meta Game Info *********
    **********************************/
+  clearLegalMoves() {
+    this.setState ({
+      legalMoves: []
+    })
+  }
+  setLegalMoves() {
+    var lglMoves = this.state.legalMoves
+  //  var isWhiteToMove = this.state.whiteToMove
+  //  console.log(isWhiteToMove)
+    //A move is a piece, dstRow, dstCol
+    //for every space
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
+        //If this space is a piece, getItsmoves
+        if (!this.sqIsEmpty(this.state.board, i, j)) {
+          let pieceToMove = this.getValueAtSquare(this.state.board, i, j)
+          if (pieceToMove.getIsWhite() === this.state.whiteToMove) {
+            //console.log("Get moves for ", pieceToMove.getPieceId()," at", i, j)
+            //lglMoves.push(new Move(pieceToMove, -1, -1))
+            let moveMatrix = this.getMoves(this.state.board, pieceToMove, this.state.whiteToMove , this.state.halfTurnCount)
+            let movesForThisPiece = this.parseMovesFromMatrix(pieceToMove, moveMatrix)
+            //lglMoves.concat(movesForThisPiece)
+            if (movesForThisPiece.length !== 0) {
+              Array.prototype.push.apply(lglMoves, movesForThisPiece)
+            }
+          }
+        }
+      }
+    }
+    lglMoves = this.pruneMovesThatCauseCheck(lglMoves)
+    /*
+    for (let i = 0; i < lglMoves.length; i++) {
+      let m = lglMoves[i]
+      console.log(m.getPiece().getPieceId(), m.getDstRow(), m.getDstCol(), m.getType())
+    }
+    */
+    console.log(lglMoves)
+    if (lglMoves.length === 0) {
+      console.log("You have no legal moves!")
+      return -1
+    }
+    else {
+      this.setState({
+        legalMoves: lglMoves
+      })
+      return 0
+    }
+  }
+  parseMovesFromMatrix(piece, moveMatrix) {
+    var lglMovesPartial = []
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
+        //console.log(moveMatrix)
+        let type = moveMatrix[i][j]
+        if (type !== '*') {
+          lglMovesPartial.push(new Move(piece, i, j, type))
+        }
+      }
+    }
+    return lglMovesPartial
+  }
+  pruneMovesThatCauseCheck(moves) {
+    const initialBoard = this.state.board
+    var originalLength = moves.length
+    for (let i = originalLength -1; i >= 0; i--) {
+      let m = moves[i]
+      //Make the move
+      var tmpBoard = this.movePieceOnBoard(initialBoard, m.getPiece().deepCopy(), m.getDstRow(), m.getDstCol(), m.getType(), this.state.halfTurnCount)
+      var king = this.getKing(tmpBoard)
+      if (this.isKingInCheck(tmpBoard, king)) {
+        moves.splice(i, 1) //Remove Item
+      }
+    }
+    return moves
+  }
+  isKingInCheck(board, king) {
+    //Try to move every other piece of the enemy.
+    var enemyColor = !(king.getIsWhite())
+    console.log(enemyColor)
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
+        if (!this.sqIsEmpty(board, i, j)) {                       //If this space is not empty, get the piece
+          let potentialThreat = this.getValueAtSquare(board, i, j)
+          if (potentialThreat.getIsWhite() === enemyColor) {      //If the piece is an enemy to the king, get its moves
+            let moveMatrix = this.getMoves(board, potentialThreat, enemyColor , this.state.halfTurnCount + 1)
+            let movesForThisPiece = this.parseMovesFromMatrix(potentialThreat, moveMatrix)
+            for (let i = 0; i < movesForThisPiece.length; i++) {
+              let enemyMove = movesForThisPiece[i]
+              if (
+                (enemyMove.getType() === CAPTURE) &&
+                (enemyMove.getDstRow() === king.getRow()) &&
+                (enemyMove.getDstCol() === king.getCol())
+              ) {
+                return true //If atleast one move can capture the king, then the king is check
+              }
+            }
+          }
+        }
+      }
+    }
+    return false //Went through every move, and no enemy piece could take the king. No check.
+  }
+  getKing(board) {
+    //Board is a slice of the original with a hypothetical move
+    //Get King
+    var isWhiteToMove = this.state.whiteToMove
+    var king = null
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
+        //console.log(board[i][j])
+        if ((board[i][j] !== '*') &&
+            (board[i][j].getPieceType() === 'K') &&
+            (board[i][j].getIsWhite() === this.state.whiteToMove))
+        {
+          king = board[i][j]
+        }
+      }
+    }
+    if (king === null) {
+      console.log("King can't be found!")
+      return false
+    }
+    return king
+  }
   findCheck() {
     /*
 
