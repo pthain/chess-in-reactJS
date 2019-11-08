@@ -183,7 +183,7 @@ class Game extends React.Component{
     var srcCol = thisBishop.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 7
-    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist, isWhiteToMove)
     return moveMatrix
   }
   queenMoves(board, thisQueen, isWhiteToMove){
@@ -192,8 +192,8 @@ class Game extends React.Component{
     var srcCol = thisQueen.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 7
-    moveMatrix = this.columnsAndRows(board, srcRow, srcCol, moveMatrix, maxDist)
-    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.columnsAndRows(board, srcRow, srcCol, moveMatrix, maxDist, isWhiteToMove)
+    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist, isWhiteToMove)
     return moveMatrix
   }
   kingMoves(board, thisKing, isWhiteToMove){
@@ -202,8 +202,8 @@ class Game extends React.Component{
     var srcCol = thisKing.getCol()
     var moveMatrix = this.initBoard()
     var maxDist = 1
-    moveMatrix = this.columnsAndRows(board, srcRow, srcCol, moveMatrix, maxDist)
-    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist)
+    moveMatrix = this.columnsAndRows(board, srcRow, srcCol, moveMatrix, maxDist, isWhiteToMove)
+    moveMatrix = this.diagonals(board, srcRow, srcCol, moveMatrix, maxDist, isWhiteToMove)
     if (!thisKing.getHasMoved()) {
       //Kingside Castle
       if (
@@ -373,6 +373,8 @@ class Game extends React.Component{
   }
   setLegalMoves() {
     var lglMoves = this.state.legalMoves
+  //  var isWhiteToMove = this.state.whiteToMove
+  //  console.log(isWhiteToMove)
     //A move is a piece, dstRow, dstCol
     //for every space
     for (let i = 0; i <= 7; i++) {
@@ -383,7 +385,7 @@ class Game extends React.Component{
           if (pieceToMove.getIsWhite() === this.state.whiteToMove) {
             //console.log("Get moves for ", pieceToMove.getPieceId()," at", i, j)
             //lglMoves.push(new Move(pieceToMove, -1, -1))
-            let moveMatrix = this.getMoves(this.state.board, pieceToMove, this.whiteToMove , this.state.halfTurnCount)
+            let moveMatrix = this.getMoves(this.state.board, pieceToMove, this.state.whiteToMove , this.state.halfTurnCount)
             let movesForThisPiece = this.parseMovesFromMatrix(pieceToMove, moveMatrix)
             //lglMoves.concat(movesForThisPiece)
             if (movesForThisPiece.length !== 0) {
@@ -590,6 +592,7 @@ class Game extends React.Component{
     //Get piece @ i, j
     let sqValue = this.getValueAtSquare(this.state.board, i, j)
     var isWhiteToMove = this.state.whiteToMove
+
     if (sqValue === null) {
       console.log("clicked sq is null (should not occur)")
     }
