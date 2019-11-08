@@ -24,8 +24,8 @@ class Game extends React.Component{
   }
 
   componentDidMount() {
-    this.getLegalMoves()
     console.log("Getting first set of legal moves")
+    this.setLegalMoves()
   }
 
   componentDidUpdate() {
@@ -372,6 +372,7 @@ class Game extends React.Component{
   setLegalMoves() {
     var lglMoves = this.state.legalMoves
     //A move is a piece, dstRow, dstCol
+    //for every space
     for (let i = 0; i <= 7; i++) {
       for (let j = 0; j <= 7; j++) {
         //If this space is a piece, getItsmoves
@@ -388,9 +389,9 @@ class Game extends React.Component{
             }
           }
         }
-        //enumerate each move from the matrix and add to the list
       }
     }
+    lglMoves = this.pruneMovesThatCauseCheck(lglMoves)
     /*
     for (let i = 0; i < lglMoves.length; i++) {
       let m = lglMoves[i]
@@ -422,6 +423,77 @@ class Game extends React.Component{
     }
     return lglMovesPartial
   }
+  pruneMovesThatCauseCheck(moves) {
+    const initialBoard = this.state.board
+    var originalLength = moves.length
+    for (let i = originalLength -1; i >= 0; i--) {
+      //var tmpBoard = this.copyBoard(initialBoard)
+      let m = moves[i]
+      //Make the move
+      //What has to happen to make the move
+      var tmpBoard = this.movePieceOnBoard(initialBoard, m.getPiece().deepCopy(), m.getDstRow(), m.getDstCol(), m.getType(), this.state.halfTurnCount)
+      //tmpBoard[m.getDstRow()][m.getDstCol()] = m.getPiece()
+      if (this.isKingInCheck(tmpBoard)) {
+        //RemoveItem
+        moves.splice(i, 1)
+      }
+    }
+    return moves
+  }
+
+  isKingInCheck(board) {
+    //Board is a slice of the original with a hypothetical move
+    //Get King
+    var isWhiteToMove = this.state.whiteToMove
+    var king = null
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
+        //console.log(board[i][j])
+        if ((board[i][j] !== '*') &&
+            (board[i][j].getPieceType() === 'K') &&
+            (board[i][j].getIsWhite() === this.state.whiteToMove))
+        {
+          king = board[i][j]
+        }
+      }
+    }
+    if (king === null) {
+      console.log("King can't be found!")
+      return false
+    }
+    /*var threats = king.pThreats
+    for (let i = 0; i < threats.length; i++) {
+      let tRow = threats[i][0]
+      let tCol = threats[i][1]
+      let tSq = board[tRow][tCol]
+        if (tSq !== '*' && (tSq.getPieceType() === 'P') && (tSq.getIsWhite() !== isWhiteToMove)) {
+        console.log("A pawn has put the king in check!!!", tSq, king)
+        return true
+      }
+    }*/
+    return false
+    }
+    /*
+    let rowColCheckMatrix = this.columnsAndRows(kRow, kCol, initMatrix, maxDist)
+    let diagCheckMatrix = this.diagonals(kRow, kCol, initMatrix, maxDist)
+    let knightCheckMatrix = this.knightMoves(king)
+    //If it's white's turn, the king is white, threat needs to be black
+    for (let i = 0; i <= 7; i++) {
+      for (let j = 0; j <= 7; j++) {
+        let threatSq = board[i][j]
+        if (knightCheckMatrix[i][j] === 'x') {
+          if(threatSq.getPieceType() === 'N') {
+            console.log(threatSq, knightCheckMatrix, "Your king is in check!")
+            return true
+          }
+        }
+      }
+    }*/
+    /*
+    */
+    //Check rows/cols
+    //Check diagonals
+    //Check for knight
 
   /********************************************
   ******* Piece & Movement Helpers ************
@@ -557,9 +629,12 @@ class Game extends React.Component{
   */
   moveDispatcher(i, j) {
     //Get the possible moves for this piece, and see if (i, j) is possible
-    let moveMatrix = this.getMoves(this.state.ssPiece)
+    let srcPiece = this.state.ssPiece
+    let ts = this.state.halfTurnCount
+    let moveMatrix = this.getMoves(srcPiece)
     if (moveMatrix[i][j] !== '*') {
-      this.moveSelectedPiece(i, j, moveMatrix[i][j])
+      var updatedBoard = this.movePieceOnBoard(this.state.board, srcPiece, i, j, moveMatrix[i][j], ts)
+      this.setBoardState(updatedBoard)
       this.clearLegalMoves()
     }
 
@@ -580,13 +655,12 @@ class Game extends React.Component{
   /**
     Given a state and a destination, update state by moving piece if poss.
   **/
-  moveSelectedPiece(i, j, type) {
-    /* Move this.ssPiece to (i, j)*/
-    var tmpBoard = this.state.board.slice()
-    var ssPiece = this.state.ssPiece
-    var ssRow = ssPiece.row
-    var ssCol = ssPiece.col
-    var ts = this.state.halfTurnCount  //Timestamp of this move
+  movePieceOnBoard(board, srcPiece, i, j, type, ts) {
+    //Move this.ssPiece to (i, j)
+    var tmpBoard = this.copyBoard(board)
+    var ssPiece = srcPiece
+    var ssRow = srcPiece.getRow()
+    var ssCol = ssPiece.getCol()
 
     if (type === ENPASSANT) {
       if (ssPiece.getIsWhite()) {
@@ -616,12 +690,14 @@ class Game extends React.Component{
     else if (type === PROMOTE) {
       ssPiece.promotePiece()
     }
-
     tmpBoard[ssRow][ssCol] = "*"  //Empty old space
     tmpBoard[i][j] = ssPiece  //move piece to new space
-    console.log("Move piece: ", i, j, ts)
+    console.log("Move piece: ", ssPiece.getPieceType(), i, j, ts)
     ssPiece.movePiece(i,j,ts)
-    //console.log(this.state.turnCount)
+    return tmpBoard
+  }
+
+  setBoardState(updatedBoard) {
     let newHalfCount = this.state.halfTurnCount + 1
     if (!this.state.whiteToMove) {
       let newCount = this.state.turnCount + 1
@@ -630,7 +706,7 @@ class Game extends React.Component{
       })
     }
     this.setState({
-      board: tmpBoard,
+      board: updatedBoard,
       whiteToMove: this.toggleTurnID(),
       halfTurnCount: newHalfCount
     })
@@ -661,6 +737,27 @@ class Game extends React.Component{
    **********************************/
   findCheck() {
     /*
+
+    //Run findCheck for EVERY move in the moveList
+    function findCheck(board, whiteToMove) {
+
+    }
+
+    When does it matter if a king is in check?
+    White's turn:
+      - At the beginning of white's turn, figure out if a king is in check.
+      - if white's king is in check, must make a move out of check
+      - black king will NOT be in check during white's turn (Otherwise the game would be over)
+      -
+
+    an idea:
+      from king:
+        check rows, cols, diagonals, and surrounding knight spaces
+        if an enemy of the right type is there, king is in check
+
+
+
+
       1. You can never put your own king in check
       2. You can never end a turn with your own king in check
       3. You can never select a piece that has no moves
