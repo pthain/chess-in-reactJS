@@ -721,9 +721,6 @@ class Game extends React.Component{
           if (potentialThreat.getIsWhite() === enemyIsWhite) {      //If the piece is an enemy to the king, get its moves
             let moveMatrix = this.getMoves(board, potentialThreat, enemyIsWhite, this.state.halfTurnCount + 1)
             let movesForThisPiece = this.parseMovesFromMatrix(potentialThreat, moveMatrix)
-          /*  if (potentialThreat.getPieceType() === 'P') {
-              console.log(potentialThreat.getPieceId(), movesForThisPiece)
-            }*/
             for (let i = 0; i < movesForThisPiece.length; i++) {
               let enemyMove = movesForThisPiece[i]
               if (
@@ -934,9 +931,9 @@ class Game extends React.Component{
     current = this.copyBoard(current)
     //var newHistory = []
     //Re-Write history if we go backwards, and make a different move
-    if (newHalfCount <= this.state.history.length) {
+    if (newHalfCount < this.state.history.length) {
       //newHistory = this.state.history.slice(0, newHalfCount)
-      console.log("Time to rewrite history...")
+      //console.log("Time to rewrite history...")
       this.setState(prevState => ({
         history: [...prevState.history.slice(0, newHalfCount), current]
       }))
@@ -1016,7 +1013,7 @@ class Game extends React.Component{
     return retCN
   }
   render() {
-    console.log(this.state.history, this.state.halfTurnCount)
+    //console.log(this.state.history, this.state.halfTurnCount)
     return (
       <div className="game-container">
         <div className="game-header">
