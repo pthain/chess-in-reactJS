@@ -438,6 +438,51 @@ class Game extends React.Component{
       -Display grey dots
   **/
   handleSquareClick(i, j) {
+    let legalMoves = this.state.legalMoves
+    let sqValue = this.getValueAtSquare(this.state.board, i, j)
+    var isWhiteToMove = this.state.whiteToMove
+
+    if (sqValue === null) {
+      console.log("clicked sq is null (should not occur)")
+    }
+    //If sqValue is a piece and its that color's move, select it
+    if(sqValue !== '*' && sqValue.getIsWhite() === isWhiteToMove) {
+      this.selectSquare(sqValue)
+    }
+
+    //if (there exists a legal move from sqValue to i, j in legalMoves)
+    else if (this.state.ssPiece !== null) {
+      if (this.moveIsValid(this.state.ssPiece, i, j, legalMoves)) {
+        let srcPiece = this.state.ssPiece
+        let ts = this.state.halfTurnCount
+        let updatedBoard = this.moveDispatcher(this.state.board, i, j, srcPiece, isWhiteToMove, ts)
+        if (updatedBoard !== null) {
+          this.setBoardState(updatedBoard) //The move to i, j was valid, reflect on board
+          this.clearLegalMoves()
+        }
+      }
+      this.deselectSquare()
+    }
+  }
+
+  moveIsValid(piece, dstRow, dstCol, legalMoves) {
+    for (let i = 0; i < legalMoves.length; i++) {
+      var m = legalMoves[i]
+      if (
+        piece.getPieceId() && m.getPiece().getPieceId() &&
+        piece.getRow() === m.getPiece().getRow() &&
+        piece.getCol() === m.getPiece().getCol() &&
+        dstRow === m.getDstRow() &&
+        dstCol === m.getDstCol()
+      )
+      {
+        return true //The piece trying to move to dstRow, dstCol is a legal move
+      }
+    }
+    return false //Went through the whole list, this move did not match a legal move
+  }
+  /*
+  handleSquareClick(i, j) {
     //Get piece @ i, j
     let sqValue = this.getValueAtSquare(this.state.board, i, j)
     var isWhiteToMove = this.state.whiteToMove
@@ -460,6 +505,7 @@ class Game extends React.Component{
       this.deselectSquare()
     }
   }
+  */
     /*
     //If not a * then a piece exists
       //If a piece exists, is it a piece for this player
@@ -528,6 +574,7 @@ class Game extends React.Component{
     //else no possible moves
     //console.log(moveMatrix)
     return moveMatrix
+
   }
   /**
     Given a state and a destination, update state by moving piece if poss.
