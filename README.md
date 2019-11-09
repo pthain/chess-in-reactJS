@@ -1,3 +1,14 @@
+## Welcome to Chess In ReactJS!
+
+Author: Phillip Thain
+Last Updated: 11/9/19
+
+This project can be run by cloning this repository to your computer, and running:
+
+### `npm start`
+
+**********
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

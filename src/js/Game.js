@@ -10,12 +10,6 @@ const ENPASSANT = 'e'
 const CASTLE = 'c'
 const PROMOTE = 'p'
 
-/*
-  TODO:
-    check if the intermediate castling moves are legal
-
-*/
-
 class Game extends React.Component{
   constructor(props) {
     super(props)
@@ -259,9 +253,8 @@ class Game extends React.Component{
           let moves =[
             (new Move(thisKing, srcRow, (srcCol), AVAILABLE)),
             (new Move(thisKing, srcRow, (srcCol-1), AVAILABLE)),
-            (new Move(thisKing, srcRow, (srcCol-2), AVAILABLE))
-            (new Move(thisKing, srcRow, (srcCol-3), AVAILABLE))
-          ]
+            (new Move(thisKing, srcRow, (srcCol-2), AVAILABLE)),
+            (new Move(thisKing, srcRow, (srcCol-3), AVAILABLE))]
           let expectedLength = moves.length
           moves = this.pruneMovesThatCauseCheck(moves)
           if (moves.length === expectedLength) {
