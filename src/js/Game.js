@@ -10,6 +10,13 @@ const ENPASSANT = 'e'
 const CASTLE = 'c'
 const PROMOTE = 'p'
 
+/*
+  TODO:
+    Check for STALEMATE
+    check if the intermediate castling moves are legal
+
+*/
+
 class Game extends React.Component{
   constructor(props) {
     super(props)
@@ -34,14 +41,26 @@ class Game extends React.Component{
         let ret = this.setLegalMoves()
 
         if (ret === -1) {
-          if (this.state.isInCheckmate === false) {
-            console.log("You are out of moves!")
-            this.setCheckmate(true)
+          let king = this.getKing(this.state.board)
+          if (this.isKingInCheck(this.state.board, king)) {
+            if (this.state.isInCheckmate === false) {
+              console.log("You are in checkmate!")
+              this.setStalemate(false)
+              this.setCheckmate(true)
+            }
+          }
+          else {
+            if (this.state.isInStalemate === false) {
+              console.log("You are out of moves!")
+              this.setCheckmate(false)
+              this.setStalemate(true)
+            }
           }
         }
         else {
           //console.log("We got some moves!")
           this.setCheckmate(false)
+          this.setStalemate(false)
         }
       }
   }
@@ -644,6 +663,11 @@ class Game extends React.Component{
       isInCheckmate: isInCheckmate
     })
   }
+  setStalemate(isInStalemate) {
+    this.setState({
+      isInStalemate: isInStalemate
+    })
+  }
   clearLegalMoves() {
     this.setState ({
       legalMoves: []
@@ -1005,7 +1029,8 @@ class Game extends React.Component{
       turnCount: 1,
       halfTurnCount: 0,
       ssPiece: null,
-      isInCheckmate: false
+      isInCheckmate: false,
+      isInStalemate: false
     })
     this.clearLegalMoves()
   }
@@ -1029,6 +1054,7 @@ class Game extends React.Component{
       <div className="game-container">
         <GameHeader
           inCheckmate={this.state.isInCheckmate}
+          inStalemate={this.state.isInStalemate}
           turnIndicatorClassName = {this.getTurnIndicatorClass()}
           turnId={this.getTurnID()}
           enemyId={this.getEnemyID()}

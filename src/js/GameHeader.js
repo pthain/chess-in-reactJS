@@ -10,11 +10,18 @@ import '../css/Board.css';
 class GameHeader extends React.Component {
 
   /* Update the board if the state changes */
-  renderGameStatus(inCheckmate) {
+  renderGameStatus(inCheckmate, inStalemate) {
     if (inCheckmate) {
       return (
         <div className="game-status game-over">
           Checkmate | {this.props.enemyId} wins!
+        </div>
+      )
+    }
+    else if (inStalemate) {
+      return (
+        <div className="game-status game-over">
+          Stalemate
         </div>
       )
     }
@@ -33,7 +40,7 @@ class GameHeader extends React.Component {
       <div className="game-header">
         <div className={this.props.turnIndicatorClassName}/>
         {/*Place a div saying whose turn it is OR who the victor is*/}
-        {this.renderGameStatus(this.props.inCheckmate, this.props.isWhiteToMove)}
+        {this.renderGameStatus(this.props.inCheckmate, this.props.inStalemate)}
         <div>
           <button id="prev-state-btn" onClick={this.props.prevOnClick} className="state-arrow-button">{"<-"}</button>
           <button id="next-state-btn" onClick={this.props.nextOnClick} className="state-arrow-button">{"->"}</button>
