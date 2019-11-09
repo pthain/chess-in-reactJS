@@ -12,7 +12,6 @@ const PROMOTE = 'p'
 
 /*
   TODO:
-    Check for STALEMATE
     check if the intermediate castling moves are legal
 
 */
@@ -236,7 +235,17 @@ class Game extends React.Component{
       {
         let ksRook = this.getValueAtSquare(board, srcRow, (srcCol+3))
         if ((ksRook !== null) && (ksRook !== '*') && (!ksRook.getHasMoved())) {
-          moveMatrix[srcRow][srcCol + 2] = CASTLE
+          //Check that the moves are legal
+          let moves =[
+            (new Move(thisKing, srcRow, (srcCol), AVAILABLE)),
+            (new Move(thisKing, srcRow, (srcCol+1), AVAILABLE)),
+            (new Move(thisKing, srcRow, (srcCol+2), AVAILABLE))
+          ]
+          let expectedLength = moves.length
+          moves = this.pruneMovesThatCauseCheck(moves)
+          if (moves.length === expectedLength) {
+            moveMatrix[srcRow][srcCol + 2] = CASTLE
+          }
         }
       }
       else if(
@@ -246,7 +255,18 @@ class Game extends React.Component{
       {
         let qsRook = this.getValueAtSquare(board, srcRow, (srcCol-4))
         if ((qsRook !== null) && (qsRook !== '*') && (!qsRook.getHasMoved())) {
-          moveMatrix[srcRow][srcCol - 2] = CASTLE
+          //Check that the moves are legal
+          let moves =[
+            (new Move(thisKing, srcRow, (srcCol), AVAILABLE)),
+            (new Move(thisKing, srcRow, (srcCol-1), AVAILABLE)),
+            (new Move(thisKing, srcRow, (srcCol-2), AVAILABLE))
+            (new Move(thisKing, srcRow, (srcCol-3), AVAILABLE))
+          ]
+          let expectedLength = moves.length
+          moves = this.pruneMovesThatCauseCheck(moves)
+          if (moves.length === expectedLength) {
+            moveMatrix[srcRow][srcCol - 2] = CASTLE
+          }
         }
       }
 
