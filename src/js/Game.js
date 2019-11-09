@@ -2,6 +2,7 @@ import React from 'react'
 import Board from './Board.js'
 import Piece from './Piece.js'
 import Move from './Move.js'
+import GameHeader from './GameHeader.js'
 
 const CAPTURE = 'x'
 const AVAILABLE = '+'
@@ -988,7 +989,7 @@ class Game extends React.Component{
       board: this.setBoardNewGame(this.initBoard()),
       history: [this.setBoardNewGame(this.initBoard())],
       whiteToMove: true,
-      turnCount: 0,
+      turnCount: 1,
       halfTurnCount: 0,
       ssPiece: null,
       ssPieceType: null,
@@ -1016,19 +1017,14 @@ class Game extends React.Component{
     //console.log(this.state.history, this.state.halfTurnCount)
     return (
       <div className="game-container">
-        <div className="game-header">
-          <div className={this.getTurnIndicatorClass()}/>
-          <div className="turn-id">
-            Whose turn is it: {this.getTurnID()} | Turn: {this.getTurnCount()}
-          </div>
-          <div>
-            <button id="prev-state-btn" onClick={() => this.handleStateClick(-1)} className="state-arrow-button">{"<-"}</button>
-            <button id="next-state-btn" onClick={() => this.handleStateClick(1)} className="state-arrow-button">{"->"}</button>
-          </div>
-          <div>
-            <button id="new-game-btn" onClick={() => this.handleNewGameClick()} className="new-game-button">New Game</button>
-          </div>
-        </div>
+        <GameHeader
+          turnIndicatorClassName = {this.getTurnIndicatorClass()}
+          turnId={this.getTurnID()}
+          turnCount={this.getTurnCount()}
+          prevOnClick={() => this.handleStateClick(-1)}
+          nextOnClick={() => this.handleStateClick(1)}
+          newGameOnClick={() => this.handleNewGameClick()}
+          />
         <Board onClick={(i, j) => this.handleSquareClick(i, j)} ssPiece={this.state.ssPiece} board={this.state.board}/>
       </div>
     );
