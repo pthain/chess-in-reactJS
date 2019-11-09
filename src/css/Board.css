@@ -14,12 +14,16 @@
   background: #b5651d;
 }
 
-.turn-id {
+.game-status {
   border-radius: 20px;
   padding: 5px;
   margin: 5px;
   background: #eee;
   color: #000;
+}
+
+.game-over {
+  background: #ff0
 }
 
 .turn-id-indicator {

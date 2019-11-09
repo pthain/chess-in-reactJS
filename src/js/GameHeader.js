@@ -10,13 +10,30 @@ import '../css/Board.css';
 class GameHeader extends React.Component {
 
   /* Update the board if the state changes */
+  renderGameStatus(inCheckmate) {
+    if (inCheckmate) {
+      return (
+        <div className="game-status game-over">
+          Checkmate | {this.props.enemyId} wins!
+        </div>
+      )
+    }
+    else {
+      return (
+        <div className="game-status">
+          Whose turn is it: {this.props.turnId} | Turn: {this.props.turnCount}
+        </div>
+      )
+    }
+  }
+
+
   render() {
     return (
       <div className="game-header">
         <div className={this.props.turnIndicatorClassName}/>
-        <div className="turn-id">
-          Whose turn is it: {this.props.turnId} | Turn: {this.props.turnCount}
-        </div>
+        {/*Place a div saying whose turn it is OR who the victor is*/}
+        {this.renderGameStatus(this.props.inCheckmate, this.props.isWhiteToMove)}
         <div>
           <button id="prev-state-btn" onClick={this.props.prevOnClick} className="state-arrow-button">{"<-"}</button>
           <button id="next-state-btn" onClick={this.props.nextOnClick} className="state-arrow-button">{"->"}</button>

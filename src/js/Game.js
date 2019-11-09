@@ -21,6 +21,7 @@ class Game extends React.Component{
       turnCount: 1,
       halfTurnCount: 0,
       ssPiece: null,
+      isInCheckmate: false
     }
   }
 
@@ -33,10 +34,14 @@ class Game extends React.Component{
         let ret = this.setLegalMoves()
 
         if (ret === -1) {
-          console.log("You are out of moves!")
+          if (this.state.isInCheckmate === false) {
+            console.log("You are out of moves!")
+            this.setCheckmate(true)
+          }
         }
         else {
           //console.log("We got some moves!")
+          this.setCheckmate(false)
         }
       }
   }
@@ -634,6 +639,11 @@ class Game extends React.Component{
   /**********************************
    ********* Meta Game Info *********
    **********************************/
+  setCheckmate(isInCheckmate) {
+    this.setState({
+      isInCheckmate: isInCheckmate
+    })
+  }
   clearLegalMoves() {
     this.setState ({
       legalMoves: []
@@ -821,6 +831,9 @@ class Game extends React.Component{
   getTurnID() {
     return (this.state.whiteToMove ? 'White' : 'Black')
   }
+  getEnemyID() {
+    return (!this.state.whiteToMove ? 'White' : 'Black')
+  }
   getTurnCount() {
     return this.state.turnCount
   }
@@ -992,10 +1005,7 @@ class Game extends React.Component{
       turnCount: 1,
       halfTurnCount: 0,
       ssPiece: null,
-      ssPieceType: null,
-      ssIsWhite: null,
-      ssRow: -1,
-      ssCol: -1,
+      isInCheckmate: false
     })
     this.clearLegalMoves()
   }
@@ -1018,8 +1028,10 @@ class Game extends React.Component{
     return (
       <div className="game-container">
         <GameHeader
+          inCheckmate={this.state.isInCheckmate}
           turnIndicatorClassName = {this.getTurnIndicatorClass()}
           turnId={this.getTurnID()}
+          enemyId={this.getEnemyID()}
           turnCount={this.getTurnCount()}
           prevOnClick={() => this.handleStateClick(-1)}
           nextOnClick={() => this.handleStateClick(1)}
