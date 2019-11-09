@@ -713,18 +713,21 @@ class Game extends React.Component{
       return false
     }
     //Try to move every other piece of the enemy.
-    var enemyColor = !(king.getIsWhite())
+    var enemyIsWhite = !(king.getIsWhite())
     for (let i = 0; i <= 7; i++) {
       for (let j = 0; j <= 7; j++) {
         if (!this.sqIsEmpty(board, i, j)) {                       //If this space is not empty, get the piece
           let potentialThreat = this.getValueAtSquare(board, i, j)
-          if (potentialThreat.getIsWhite() === enemyColor) {      //If the piece is an enemy to the king, get its moves
-            let moveMatrix = this.getMoves(board, potentialThreat, enemyColor , this.state.halfTurnCount + 1)
+          if (potentialThreat.getIsWhite() === enemyIsWhite) {      //If the piece is an enemy to the king, get its moves
+            let moveMatrix = this.getMoves(board, potentialThreat, enemyIsWhite, this.state.halfTurnCount + 1)
             let movesForThisPiece = this.parseMovesFromMatrix(potentialThreat, moveMatrix)
+          /*  if (potentialThreat.getPieceType() === 'P') {
+              console.log(potentialThreat.getPieceId(), movesForThisPiece)
+            }*/
             for (let i = 0; i < movesForThisPiece.length; i++) {
               let enemyMove = movesForThisPiece[i]
               if (
-                (enemyMove.getType() === CAPTURE) &&
+                ((enemyMove.getType() === CAPTURE) || (enemyMove.getType() === PROMOTE)) &&
                 (enemyMove.getDstRow() === king.getRow()) &&
                 (enemyMove.getDstCol() === king.getCol())
               ) {
