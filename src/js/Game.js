@@ -24,7 +24,6 @@ class Game extends React.Component{
   }
 
   componentDidMount() {
-    console.log("Getting first set of legal moves")
     this.setLegalMoves()
   }
 
@@ -36,7 +35,7 @@ class Game extends React.Component{
           console.log("You are out of moves!")
         }
         else {
-        console.log("We got some moves!")
+          //console.log("We got some moves!")
         }
       }
   }
@@ -481,31 +480,6 @@ class Game extends React.Component{
     }
     return false //Went through the whole list, this move did not match a legal move
   }
-  /*
-  handleSquareClick(i, j) {
-    //Get piece @ i, j
-    let sqValue = this.getValueAtSquare(this.state.board, i, j)
-    var isWhiteToMove = this.state.whiteToMove
-
-    if (sqValue === null) {
-      console.log("clicked sq is null (should not occur)")
-    }
-    //If sqValue is a piece and its that color's move, select it
-    if(sqValue !== '*' && sqValue.getIsWhite() === isWhiteToMove) {
-      this.selectSquare(sqValue)
-    }
-    else if (this.state.ssPiece !== null) {
-      let srcPiece = this.state.ssPiece
-      let ts = this.state.halfTurnCount
-      let updatedBoard = this.moveDispatcher(this.state.board, i, j, srcPiece, isWhiteToMove, ts)
-      if (updatedBoard !== null) {
-        this.setBoardState(updatedBoard) //The move to i, j was valid, reflect on board
-        this.clearLegalMoves()
-      }
-      this.deselectSquare()
-    }
-  }
-  */
     /*
     //If not a * then a piece exists
       //If a piece exists, is it a piece for this player
@@ -634,7 +608,7 @@ class Game extends React.Component{
       whiteToMove: this.toggleTurnID(),
       halfTurnCount: newHalfCount
     })
-    this.updateHistory(newHalfCount)
+    this.updateHistory(updatedBoard, newHalfCount)
   }
 
   handleNewGameClick() {
@@ -695,9 +669,9 @@ class Game extends React.Component{
       console.log(m.getPiece().getPieceId(), m.getDstRow(), m.getDstCol(), m.getType())
     }
     */
-    console.log(lglMoves)
+    //console.log(lglMoves)
     if (lglMoves.length === 0) {
-      console.log("You have no legal moves!")
+      //console.log("You have no legal moves!")
       return -1
     }
     else {
@@ -735,9 +709,11 @@ class Game extends React.Component{
     return moves
   }
   isKingInCheck(board, king) {
+    if (king === null) {
+      return false
+    }
     //Try to move every other piece of the enemy.
     var enemyColor = !(king.getIsWhite())
-    console.log(enemyColor)
     for (let i = 0; i <= 7; i++) {
       for (let j = 0; j <= 7; j++) {
         if (!this.sqIsEmpty(board, i, j)) {                       //If this space is not empty, get the piece
@@ -771,7 +747,7 @@ class Game extends React.Component{
         //console.log(board[i][j])
         if ((board[i][j] !== '*') &&
             (board[i][j].getPieceType() === 'K') &&
-            (board[i][j].getIsWhite() === this.state.whiteToMove))
+            (board[i][j].getIsWhite() === isWhiteToMove))
         {
           king = board[i][j]
         }
@@ -951,9 +927,23 @@ class Game extends React.Component{
       return sqValue
     }
   }
-  updateHistory(newHalfCount) {
-    var current = this.copyBoard(this.state.board)
-    var newHistory = []
+  updateHistory(current, newHalfCount) {
+    current = this.copyBoard(current)
+    //var newHistory = []
+    //Re-Write history if we go backwards, and make a different move
+    if (newHalfCount <= this.state.history.length) {
+      //newHistory = this.state.history.slice(0, newHalfCount)
+      console.log("Time to rewrite history...")
+      this.setState(prevState => ({
+        history: [...prevState.history.slice(0, newHalfCount), current]
+      }))
+    }
+    else {
+      this.setState(prevState => ({
+        history: [...prevState.history, current]
+      }))
+    }
+    /*
     //Re-Write history if we go backwards, and make a different move
     if (newHalfCount < this.state.history.length) {
       newHistory = this.state.history.slice(0, newHalfCount)
@@ -965,15 +955,17 @@ class Game extends React.Component{
     this.setState({
       history: newHistory
     })
+    */
   }
   getHistory(index) {
+    this.clearLegalMoves()
     if (index >= 0 && index < this.state.history.length) {
       this.setState({
         board: this.copyBoard(this.state.history[index]),
         turnCount: (Math.floor(index/2) + 1),
         halfTurnCount: index,
       })
-      console.log(this.state.history[index])
+      //console.log(this.state.history[index])
       if ((index % 2) === 0) {
         console.log("It is now white's turn")
         this.setState({
@@ -1004,6 +996,7 @@ class Game extends React.Component{
       ssRow: -1,
       ssCol: -1,
     })
+    this.clearLegalMoves()
   }
 
   /********************************************
@@ -1020,7 +1013,7 @@ class Game extends React.Component{
     return retCN
   }
   render() {
-    //console.log(this.state.board)
+    console.log(this.state.history, this.state.halfTurnCount)
     return (
       <div className="game-container">
         <div className="game-header">
